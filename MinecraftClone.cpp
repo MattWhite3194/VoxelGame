@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "Texture.h"
 #include "Chunk.hpp"
+#include <unordered_map>
 
 //GLFW for window management
 //Glad for initializing opengl functions with gpu driver
@@ -19,7 +20,14 @@ int viewportWidth = 1000, viewportHeight = 1000;
 glm::mat4 Projection = glm::perspective(glm::radians(51.0f),
     (float)viewportWidth / (float)viewportHeight,
     0.1f, 1000.0f);
-Chunk* firstChunk;
+
+
+struct IVec2Hash {
+    size_t operator()(const glm::ivec2& v) const noexcept {
+        return (std::hash<int>()(v.x) ^ (std::hash<int>()(v.y) << 1));
+    }
+};
+std::unordered_map<glm::ivec2, Chunk*, IVec2Hash> worldChunks;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -93,10 +101,17 @@ int main()
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
 
-    firstChunk = new Chunk();
-    firstChunk->Generate();
-    firstChunk->BuildMesh();
-    firstChunk->position = glm::vec2(0.0f);
+    //initialize chunks in 16 x 16 grid (16 render distance)
+    for (int x = -8; x <= 8; x++) {
+        for (int y = -8; y <= 8; y++) {
+            glm::ivec2 position(x, y);
+            worldChunks[position] = new Chunk();
+            Chunk* newChunk = worldChunks[position];
+            newChunk->Generate();
+            newChunk->BuildMesh();
+            newChunk->position = position;
+        }
+    }
     //main window loop
     while (!glfwWindowShouldClose(window)) {
         //calculate delta time
@@ -112,12 +127,13 @@ int main()
         blockShader.setMat4("projection", Projection);
         blockShader.setMat4("view", camera.GetViewMatrix());
         //chunk loop
-        firstChunk->Render(blockShader);
+        for (auto c : worldChunks) {
+            c.second->Render(blockShader);
+        }
             
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
-    delete(firstChunk);
     glfwTerminate();
     return 0;
 }

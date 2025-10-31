@@ -82,7 +82,7 @@ void Chunk::Generate() {
 void Chunk::Render(Shader& shader) {
     shader.use();
     glm::mat4 model(1.0f);
-    model = glm::translate(model, glm::vec3(position, 0.0f));
+    model = glm::translate(model, glm::vec3(position * 16.0f, 0.0f));
     shader.setMat4("model", model);
     glBindVertexArray(MeshVAO);
     glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
