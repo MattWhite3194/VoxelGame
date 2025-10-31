@@ -77,9 +77,32 @@ void Chunk::Generate() {
             }
         }
     }
+    generated = true;
 }
 
 void Chunk::Render(Shader& shader) {
+    if (!MeshVAO || !MeshVBO) {
+        glGenVertexArrays(1, &MeshVAO);
+        glGenBuffers(1, &MeshVBO);
+        //bind VAO
+        glBindVertexArray(MeshVAO);
+
+        //bind VBO
+        glBindBuffer(GL_ARRAY_BUFFER, MeshVBO);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLubyte), vertices.data(), GL_STATIC_DRAW);
+
+        //position attrbute
+        glVertexAttribPointer(0, 3, GL_UNSIGNED_BYTE, GL_FALSE, 5 * sizeof(GLubyte), (void*)0);
+        glEnableVertexAttribArray(0);
+        //face index
+        glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 5 * sizeof(GLubyte), (void*)(3 * sizeof(GLubyte)));
+        glEnableVertexAttribArray(1);
+        //tex index
+        glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 5 * sizeof(GLubyte), (void*)(4 * sizeof(GLubyte)));
+        glEnableVertexAttribArray(2);
+        glBindVertexArray(0);
+    }
+
     shader.use();
     glm::mat4 model(1.0f);
     model = glm::translate(model, glm::vec3(position * 16.0f, 0.0f));
@@ -90,10 +113,6 @@ void Chunk::Render(Shader& shader) {
 }
 
 void Chunk::BuildMesh() {
-    if (!MeshVAO)
-        glGenVertexArrays(1, &MeshVAO);
-    if (!MeshVBO)
-        glGenBuffers(1, &MeshVBO);
 
     if (vertices.size() == 0)
         //reserve 16x16x20 blocks of 72 vertices
@@ -167,24 +186,7 @@ void Chunk::BuildMesh() {
             }
         }
     }
-    //bind VAO
-    glBindVertexArray(MeshVAO);
-
-    //bind VBO
-    glBindBuffer(GL_ARRAY_BUFFER, MeshVBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLubyte), vertices.data(), GL_STATIC_DRAW);
-
-    //position attrbute
-    glVertexAttribPointer(0, 3, GL_UNSIGNED_BYTE, GL_FALSE, 5 * sizeof(GLubyte), (void*)0);
-    glEnableVertexAttribArray(0);
-    //face index
-    glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 5 * sizeof(GLubyte), (void*)(3 * sizeof(GLubyte)));
-    glEnableVertexAttribArray(1);
-    //tex index
-    glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 5 * sizeof(GLubyte), (void*)(4 * sizeof(GLubyte)));
-    glEnableVertexAttribArray(2);
-
-    glBindVertexArray(0);
+    meshed = true;
 }
 
 int Chunk::GetBlock(int x, int y, int z) {

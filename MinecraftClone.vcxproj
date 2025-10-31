@@ -147,6 +147,7 @@
     <ClInclude Include="Chunk.hpp" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="ThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="block.frag" />

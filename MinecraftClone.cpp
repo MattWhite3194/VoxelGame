@@ -7,11 +7,13 @@
 #include "Texture.h"
 #include "Chunk.hpp"
 #include <unordered_map>
+#include "ThreadPool.h"
 
 //GLFW for window management
 //Glad for initializing opengl functions with gpu driver
 //glm for linear algebra
 Camera camera;
+ThreadPool pool;
 double lastX = 0.0, lastY = 0.0;
 bool firstMouse = true;
 float deltaTime = 0.0f;
@@ -28,6 +30,11 @@ struct IVec2Hash {
     }
 };
 std::unordered_map<glm::ivec2, Chunk*, IVec2Hash> worldChunks;
+
+void generateChunk(Chunk& chunk) {
+    chunk.Generate();
+    chunk.BuildMesh();
+}
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -127,8 +134,26 @@ int main()
         blockShader.setMat4("projection", Projection);
         blockShader.setMat4("view", camera.GetViewMatrix());
         //chunk loop
-        for (auto c : worldChunks) {
-            c.second->Render(blockShader);
+        for (int x = -8; x <= 8; x++) {
+            for (int y = -8; y <= 8; y++) {
+                glm::ivec2 position(camera.Position.x / 16.0f + x, camera.Position.y / 16.0f + y);
+                Chunk* chunk = worldChunks[position];
+                if (chunk) {
+                    if (chunk->meshed)
+                        chunk->Render(blockShader);
+                }
+                else {
+                    worldChunks[position] = new Chunk();
+                    Chunk* newChunk = worldChunks[position];
+                    newChunk->position = position;
+                    //generateChunk(*newChunk);
+                    pool.enqueue([newChunk] {
+                        generateChunk(*newChunk);
+                        });
+                    //std::thread generationThread(generateChunk, std::ref(*newChunk));
+                    //generationThread.detach();
+                }
+            }
         }
             
         glfwPollEvents();
