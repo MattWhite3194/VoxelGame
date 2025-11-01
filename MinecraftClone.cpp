@@ -13,7 +13,8 @@
 //Glad for initializing opengl functions with gpu driver
 //glm for linear algebra
 Camera camera;
-ThreadPool pool;
+ThreadPool generationPool(std::thread::hardware_concurrency() - 1 / 2);
+ThreadPool meshingPool(std::thread::hardware_concurrency() - 1 / 2);
 double lastX = 0.0, lastY = 0.0;
 bool firstMouse = true;
 float deltaTime = 0.0f;
@@ -30,11 +31,6 @@ struct IVec2Hash {
     }
 };
 std::unordered_map<glm::ivec2, Chunk*, IVec2Hash> worldChunks;
-
-void generateChunk(Chunk& chunk) {
-    chunk.Generate();
-    chunk.BuildMesh();
-}
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -116,7 +112,7 @@ int main()
             Chunk* newChunk = worldChunks[position];
             newChunk->position = position;
             newChunk->Generate();
-            newChunk->BuildMesh();
+            //newChunk->BuildMesh();
         }
     }
     camera.Position = glm::vec3(0.0f, 0.0f, 80.0f);
@@ -134,26 +130,63 @@ int main()
         textureAtlas.Bind();
         blockShader.setMat4("projection", Projection);
         blockShader.setMat4("view", camera.GetViewMatrix());
-        //chunk loop
-        //8 render distance, currently
-        for (int x = -8; x <= 8; x++) {
-            for (int y = -8; y <= 8; y++) {
-                glm::ivec2 position(camera.Position.x / 16.0f + x, camera.Position.y / 16.0f + y);
-                Chunk* chunk = worldChunks[position];
-                if (chunk) {
-                    if (chunk->meshed)
-                        chunk->Render(blockShader);
-                }
-                else {
-                    worldChunks[position] = new Chunk();
-                    Chunk* newChunk = worldChunks[position];
-                    newChunk->position = position;
-                    pool.enqueue([newChunk] {
-                        generateChunk(*newChunk);
+
+        //loop through chunks in spiral starting from player position
+        int x = 0;
+        int y = 0;
+        int dx = 0;
+        int dy = -1;
+        int maxDistance = 90;
+
+        for (int i = 0; i < maxDistance * maxDistance; i++) { 
+            glm::ivec2 position(camera.Position.x / 16.0f + x, camera.Position.y / 16.0f + y);
+            Chunk* chunk = worldChunks[position];
+            if (chunk) {
+                if (!chunk->generated)
+                    continue;
+                if (chunk->meshed)
+                    chunk->Render(blockShader);
+                else if (!chunk->meshBuildQueued) {
+                    auto it = worldChunks.find(position + glm::ivec2(0, 1));
+                    if (it != worldChunks.end())
+                        chunk->NorthNeighbor = it->second;
+
+                    it = worldChunks.find(position + glm::ivec2(1, 0));
+                    if (it != worldChunks.end())
+                        chunk->EastNeighbor = it->second;
+
+                    it = worldChunks.find(position + glm::ivec2(0, -1));
+                    if (it != worldChunks.end())
+                        chunk->SouthNeighbor = it->second;
+
+                    it = worldChunks.find(position + glm::ivec2(-1, 0));
+                    if (it != worldChunks.end())
+                        chunk->WestNeighbor = it->second;
+                    chunk->meshBuildQueued = true;
+                    meshingPool.enqueue([chunk] {
+                        chunk->BuildMesh();
                     });
                 }
             }
+            else {
+                worldChunks[position] = new Chunk();
+                Chunk* newChunk = worldChunks[position];
+                newChunk->position = position;
+                generationPool.enqueue([newChunk] {
+                    newChunk->Generate();
+                    });
+            }
+
+            if (x == y || (x < 0 && x == -y) || (x > 0 && x == 1 - y)) {
+                int temp = dx;
+                dx = -dy;
+                dy = temp;
+            }
+            x += dx;
+            y += dy;
         }
+        //std::cout << "GenerationPool: " << generationPool.Busy() << std::endl;
+        //std::cout << "MeshingPool: " << meshingPool.Busy() << std::endl;
             
         glfwPollEvents();
         glfwSwapBuffers(window);

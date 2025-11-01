@@ -1,6 +1,8 @@
-#include "Chunk.hpp"
+﻿#include "Chunk.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <chrono>
+#include <iostream>
 
 //Use triangle strips to only have 8 vertices per chunk
 //On generation, create a vertex buffer of the vertices in the geometry, that way only one draw call is needed to render the entire chunk
@@ -127,91 +129,101 @@ void Chunk::Render(Shader& shader) {
     glBindVertexArray(0);
 }
 
-void Chunk::BuildMesh() {
+struct Vertex {
+    uint8_t x, y, z;
+    uint8_t face;
+    uint8_t corner;
+    uint8_t block;
+};
 
-    if (vertices.size() == 0)
-        //reserve 16x16x20 blocks of 72 vertices
-        vertices.reserve(sizeof(float) * 16 * 16 * 20 * 72);
-    else
-        vertices.clear();
-    //loop through blocks and build mesh
+void Chunk::BuildMesh() {
+    // Reserve space for all possible faces once
+    auto start = std::chrono::high_resolution_clock::now();
+    vertices.clear();
+
+    // Temporary vertex container (avoid pushing individual bytes)
+    std::vector<Vertex> tempVerts;
+    tempVerts.reserve(16 * 16 * 20 * 72);
+
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 256; z++) {
-                if (GetBlock(x, y, z) != 0) {
-                    //x increasing -> going away from screen
-                    //y increasing -> going to the right
-                    //z increasing -> going up
 
-                    if (y == 0 || GetBlock(x, y - 1, z) == 0) {
-                        int i = 0;
-                        for (auto v : backFace) {
-                            vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
-                            vertices.push_back(1);
-                            vertices.push_back(i);
-                            vertices.push_back(GetBlock(x, y, z));
-                            i++;
-                        }
-                    }
-                    if (y == 15 || GetBlock(x, y + 1, z) == 0) {
-                        int i = 0;
-                        for (auto v : frontFace) {
-                            vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
-                            vertices.push_back(0);
-                            vertices.push_back(i);
-                            vertices.push_back(GetBlock(x, y, z));
-                            i++;
-                        }
-                    }
-                    if (x == 0 || GetBlock(x - 1, y, z) == 0) {
-                        int i = 0;
-                        for (auto v : leftFace) {
-                            vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
-                            vertices.push_back(2);
-                            vertices.push_back(i);
-                            vertices.push_back(GetBlock(x, y, z));
-                            i++;
-                        }
-                    }
-                    if (x == 15 || GetBlock(x + 1, y, z) == 0) {
-                        int i = 0;
-                        for (auto v : rightFace) {
-                            vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
-                            vertices.push_back(3);
-                            vertices.push_back(i);
-                            vertices.push_back(GetBlock(x, y, z));
-                            i++;
-                        }
-                    }
-                    if (z == 0 || GetBlock(x, y, z - 1) == 0) {
-                        int i = 0;
-                        for (auto v : bottomFace) {
-                            vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
-                            vertices.push_back(4);
-                            vertices.push_back(i);
-                            vertices.push_back(GetBlock(x, y, z));
-                            i++;
-                        }
-                    }
-                    if (z == 255 || GetBlock(x, y, z + 1) == 0) {
-                        int i = 0;
-                        for (auto v : topFace) {
-                            vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
-                            vertices.push_back(5);
-                            vertices.push_back(i);
-                            vertices.push_back(GetBlock(x, y, z));
-                            i++;
-                        }
-                    }
+                int block = GetBlock(x, y, z);
+                if (block == 0)
+                    continue;
+
+                // Back face (−Y)
+                if (y == 0 || GetBlock(x, y - 1, z) == 0) {
+                    int i = 0;
+                    for (auto& v : backFace)
+                        tempVerts.push_back({
+                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
+                            1, uint8_t(i++), uint8_t(block)
+                            });
+                }
+
+                // Front face (+Y)
+                if (y == 15 || GetBlock(x, y + 1, z) == 0) {
+                    int i = 0;
+                    for (auto& v : frontFace)
+                        tempVerts.push_back({
+                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
+                            0, uint8_t(i++), uint8_t(block)
+                            });
+                }
+
+                // Left face (−X)
+                if (x == 0 || GetBlock(x - 1, y, z) == 0) {
+                    int i = 0;
+                    for (auto& v : leftFace)
+                        tempVerts.push_back({
+                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
+                            2, uint8_t(i++), uint8_t(block)
+                            });
+                }
+
+                // Right face (+X)
+                if (x == 15 || GetBlock(x + 1, y, z) == 0) {
+                    int i = 0;
+                    for (auto& v : rightFace)
+                        tempVerts.push_back({
+                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
+                            3, uint8_t(i++), uint8_t(block)
+                            });
+                }
+
+                // Bottom face (−Z)
+                if (z == 0 || GetBlock(x, y, z - 1) == 0) {
+                    int i = 0;
+                    for (auto& v : bottomFace)
+                        tempVerts.push_back({
+                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
+                            4, uint8_t(i++), uint8_t(block)
+                            });
+                }
+
+                // Top face (+Z)
+                if (z == 255 || GetBlock(x, y, z + 1) == 0) {
+                    int i = 0;
+                    for (auto& v : topFace)
+                        tempVerts.push_back({
+                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
+                            5, uint8_t(i++), uint8_t(block)
+                            });
                 }
             }
         }
     }
-    meshed = true;
-}
 
-int Chunk::GetBlock(int x, int y, int z) {
-    return blocks[x * (16 * 256) + y * 256 + z];
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "BuildMesh took " << duration << " ms\n";
+    // Copy to your byte vector
+    vertices.resize(tempVerts.size() * sizeof(Vertex));
+    memcpy(vertices.data(), tempVerts.data(), vertices.size());
+    meshed = true;
+    meshBuildQueued = false;
 }
 
 void Chunk::SetBlock(int x, int y, int z, int ID) {

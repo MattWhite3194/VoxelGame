@@ -16,8 +16,11 @@ public:
                     std::function<void()> job;
                     {
                         std::unique_lock<std::mutex> lock(mtx);
-                        cv.wait(lock, [this] { return !jobs.empty() || stop; });
-                        if (stop && jobs.empty()) return;
+                        cv.wait(lock, [this] { 
+                            return !jobs.empty() || stop; 
+                        });
+                        if (stop && jobs.empty())
+                            return;
                         job = std::move(jobs.front());
                         jobs.pop();
                     }
@@ -42,6 +45,10 @@ public:
             jobs.push(std::move(job));
         }
         cv.notify_one();
+    }
+
+    bool Busy() {
+        return !jobs.empty();
     }
 
 private:
