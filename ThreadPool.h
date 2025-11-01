@@ -23,7 +23,7 @@ public:
                     }
                     job(); // execute
                 }
-                });
+            });
         }
     }
 

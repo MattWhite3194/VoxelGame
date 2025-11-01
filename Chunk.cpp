@@ -6,6 +6,8 @@
 //On generation, create a vertex buffer of the vertices in the geometry, that way only one draw call is needed to render the entire chunk
 //check each block and it's surrounding face to determine which vertices to add
 
+SimplexNoise Chunk::terrainNoise(0.1f);
+
 glm::u8vec3 frontFace[] = {
     glm::u8vec3(0, 1, 0),  // v0 bottom-left
     glm::u8vec3(1, 1, 0),  // v1 bottom-right
@@ -70,10 +72,19 @@ void Chunk::Generate() {
 	blocks = std::vector<int>(16 * 16 * 256, 0);
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
-            for (int z = 255; z >= 0; z--) {
-                //for now just fill blocks below 60
-                if (z <= 10 + x + y)
-                    blocks[x * (16 * 256) + y * 256 + z] = 1;
+            int height = (int)(30 * terrainNoise.fractal(3, x / 16.0f + (float)position.x, y / 16.0f + (float)position.y));
+            for (int z = 40 + height; z >= 0; z--) {
+                /*Blocks
+                * 3 grass
+                * 2 dirt
+                * 1 stone
+                */
+                if (z == 40 + height)
+                    SetBlock(x, y, z, 3);
+                else if (z > height + 36)
+                    SetBlock(x, y, z, 2);
+                else
+                    SetBlock(x, y, z, 1);
             }
         }
     }
@@ -92,14 +103,18 @@ void Chunk::Render(Shader& shader) {
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLubyte), vertices.data(), GL_STATIC_DRAW);
 
         //position attrbute
-        glVertexAttribPointer(0, 3, GL_UNSIGNED_BYTE, GL_FALSE, 5 * sizeof(GLubyte), (void*)0);
+        glVertexAttribPointer(0, 3, GL_UNSIGNED_BYTE, GL_FALSE, 6 * sizeof(GLubyte), (void*)0);
         glEnableVertexAttribArray(0);
         //face index
-        glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 5 * sizeof(GLubyte), (void*)(3 * sizeof(GLubyte)));
+        glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 6 * sizeof(GLubyte), (void*)(3 * sizeof(GLubyte)));
         glEnableVertexAttribArray(1);
         //tex index
-        glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 5 * sizeof(GLubyte), (void*)(4 * sizeof(GLubyte)));
+        glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 6 * sizeof(GLubyte), (void*)(4 * sizeof(GLubyte)));
         glEnableVertexAttribArray(2);
+        //block id
+        glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 6 * sizeof(GLubyte), (void*)(5 * sizeof(GLubyte)));
+        glEnableVertexAttribArray(3);
+
         glBindVertexArray(0);
     }
 
@@ -134,6 +149,7 @@ void Chunk::BuildMesh() {
                             vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
                             vertices.push_back(1);
                             vertices.push_back(i);
+                            vertices.push_back(GetBlock(x, y, z));
                             i++;
                         }
                     }
@@ -143,6 +159,7 @@ void Chunk::BuildMesh() {
                             vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
                             vertices.push_back(0);
                             vertices.push_back(i);
+                            vertices.push_back(GetBlock(x, y, z));
                             i++;
                         }
                     }
@@ -152,6 +169,7 @@ void Chunk::BuildMesh() {
                             vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
                             vertices.push_back(2);
                             vertices.push_back(i);
+                            vertices.push_back(GetBlock(x, y, z));
                             i++;
                         }
                     }
@@ -161,6 +179,7 @@ void Chunk::BuildMesh() {
                             vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
                             vertices.push_back(3);
                             vertices.push_back(i);
+                            vertices.push_back(GetBlock(x, y, z));
                             i++;
                         }
                     }
@@ -170,6 +189,7 @@ void Chunk::BuildMesh() {
                             vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
                             vertices.push_back(4);
                             vertices.push_back(i);
+                            vertices.push_back(GetBlock(x, y, z));
                             i++;
                         }
                     }
@@ -179,6 +199,7 @@ void Chunk::BuildMesh() {
                             vertices.insert(vertices.end(), { GLubyte(v.x + x), GLubyte(v.y + y), GLubyte(v.z + z) });
                             vertices.push_back(5);
                             vertices.push_back(i);
+                            vertices.push_back(GetBlock(x, y, z));
                             i++;
                         }
                     }
@@ -191,4 +212,8 @@ void Chunk::BuildMesh() {
 
 int Chunk::GetBlock(int x, int y, int z) {
     return blocks[x * (16 * 256) + y * 256 + z];
+}
+
+void Chunk::SetBlock(int x, int y, int z, int ID) {
+    blocks[x * (16 * 256) + y * 256 + z] = ID;
 }

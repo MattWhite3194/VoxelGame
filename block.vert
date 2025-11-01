@@ -2,6 +2,7 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in uint faceIndex;
 layout (location = 2) in uint texIndex;
+layout (location = 3) in uint blockID;
 
 out vec3 FragPos;
 out vec2 TexCoord;
@@ -21,12 +22,22 @@ const vec3 faceNormals[6] = vec3[](
 );
 
 const vec2 texCoords[6] = vec2[](
+    vec2(0.0, 1.0 - 0.0625),
+    vec2(0.0625, 1.0 - 0.0625),
     vec2(0.0, 1.0),
-    vec2(0.0625, 1.0),
-    vec2(0.0, 1.0 - 0.0625),
-    vec2(0.0, 1.0 - 0.0625),
-    vec2(0.0625, 1.0),
-    vec2(0.0625, 1.0 - 0.0625)
+    vec2(0.0, 1.0),
+    vec2(0.0625, 1.0 - 0.0625),
+    vec2(0.0625, 1.0)
+);
+
+const vec3 blockCoords[3] = vec3[](
+        //top, side, bottom
+    //stone
+    vec3(1, 1, 1),
+    //dirt
+    vec3(2, 2, 2),
+    //grass
+    vec3(0, 3, 2)
 );
 
 //Texture coords - Bottom-left -> top-right
@@ -35,5 +46,12 @@ void main()
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 	FragPos = vec3(model * vec4(aPos, 1.0));
 	Normal = faceNormals[faceIndex];
-    TexCoord = texCoords[texIndex];
+
+    int index = 0;
+    if (Normal.z < 0)
+        index = 2;
+    else if (abs(Normal.x) + abs(Normal.y) > 0)
+        index = 1;
+    //TODO: modulation for y axis for blockids that are greater or equal to 16, every 16 blocks, add 0.0625 to y
+    TexCoord = texCoords[texIndex] + vec2(0.0625 * blockCoords[blockID - 1][index], 0.0);
 }  

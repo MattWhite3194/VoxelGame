@@ -98,7 +98,7 @@ int main()
     glfwSetCursorPosCallback(window, cursor_pos_callback);
 
     Shader blockShader("block.vert", "block.frag");
-    Texture textureAtlas("Blocks.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+    Texture textureAtlas("terrain.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
     textureAtlas.texUnit(blockShader, "TextureAtlas", 0);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -108,24 +108,25 @@ int main()
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
 
-    //initialize chunks in 16 x 16 grid (16 render distance)
-    for (int x = -8; x <= 8; x++) {
-        for (int y = -8; y <= 8; y++) {
+    //create first 9 chunks that the player is standing on
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
             glm::ivec2 position(x, y);
             worldChunks[position] = new Chunk();
             Chunk* newChunk = worldChunks[position];
+            newChunk->position = position;
             newChunk->Generate();
             newChunk->BuildMesh();
-            newChunk->position = position;
         }
     }
+    camera.Position = glm::vec3(0.0f, 0.0f, 80.0f);
     //main window loop
     while (!glfwWindowShouldClose(window)) {
         //calculate delta time
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        std::cout << 1.0f / deltaTime << std::endl;
+        //std::cout << 1.0f / deltaTime << std::endl;
         process_input(window);
         glClearColor(0.4f, 0.55f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -134,6 +135,7 @@ int main()
         blockShader.setMat4("projection", Projection);
         blockShader.setMat4("view", camera.GetViewMatrix());
         //chunk loop
+        //8 render distance, currently
         for (int x = -8; x <= 8; x++) {
             for (int y = -8; y <= 8; y++) {
                 glm::ivec2 position(camera.Position.x / 16.0f + x, camera.Position.y / 16.0f + y);
@@ -146,12 +148,9 @@ int main()
                     worldChunks[position] = new Chunk();
                     Chunk* newChunk = worldChunks[position];
                     newChunk->position = position;
-                    //generateChunk(*newChunk);
                     pool.enqueue([newChunk] {
                         generateChunk(*newChunk);
-                        });
-                    //std::thread generationThread(generateChunk, std::ref(*newChunk));
-                    //generationThread.detach();
+                    });
                 }
             }
         }

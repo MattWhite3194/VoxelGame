@@ -140,11 +140,13 @@
     <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="MinecraftClone.cpp" />
+    <ClCompile Include="SimplexNoise.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Block.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Chunk.hpp" />
+    <ClInclude Include="SimplexNoise.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="ThreadPool.h" />
@@ -154,7 +156,7 @@
     <None Include="block.vert" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Blocks.png" />
+    <Image Include="terrain.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

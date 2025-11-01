@@ -30,6 +30,9 @@
     <ClCompile Include="Chunk.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SimplexNoise.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Block.h">
@@ -50,6 +53,9 @@
     <ClInclude Include="ThreadPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SimplexNoise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="block.frag">
@@ -60,7 +66,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Blocks.png">
+    <Image Include="terrain.png">
       <Filter>Resource Files\Textures</Filter>
     </Image>
   </ItemGroup>
