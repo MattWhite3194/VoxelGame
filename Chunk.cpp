@@ -102,19 +102,19 @@ void Chunk::Render(Shader& shader) {
 
         //bind VBO
         glBindBuffer(GL_ARRAY_BUFFER, MeshVBO);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLubyte), vertices.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 
         //position attrbute
-        glVertexAttribPointer(0, 3, GL_UNSIGNED_BYTE, GL_FALSE, 6 * sizeof(GLubyte), (void*)0);
+        glVertexAttribPointer(0, 3, GL_UNSIGNED_BYTE, GL_FALSE, 6 * sizeof(uint8_t), (void*)0);
         glEnableVertexAttribArray(0);
         //face index
-        glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 6 * sizeof(GLubyte), (void*)(3 * sizeof(GLubyte)));
+        glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 6 * sizeof(uint8_t), (void*)(3 * sizeof(uint8_t)));
         glEnableVertexAttribArray(1);
         //tex index
-        glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 6 * sizeof(GLubyte), (void*)(4 * sizeof(GLubyte)));
+        glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 6 * sizeof(uint8_t), (void*)(4 * sizeof(uint8_t)));
         glEnableVertexAttribArray(2);
         //block id
-        glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 6 * sizeof(GLubyte), (void*)(5 * sizeof(GLubyte)));
+        glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 6 * sizeof(uint8_t), (void*)(5 * sizeof(uint8_t)));
         glEnableVertexAttribArray(3);
 
         glBindVertexArray(0);
@@ -125,25 +125,17 @@ void Chunk::Render(Shader& shader) {
     model = glm::translate(model, glm::vec3(position * 16.0f, 0.0f));
     shader.setMat4("model", model);
     glBindVertexArray(MeshVAO);
-    glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
+    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     glBindVertexArray(0);
 }
-
-struct Vertex {
-    uint8_t x, y, z;
-    uint8_t face;
-    uint8_t corner;
-    uint8_t block;
-};
 
 void Chunk::BuildMesh() {
     // Reserve space for all possible faces once
     auto start = std::chrono::high_resolution_clock::now();
-    vertices.clear();
 
-    // Temporary vertex container (avoid pushing individual bytes)
-    std::vector<Vertex> tempVerts;
-    tempVerts.reserve(16 * 16 * 20 * 72);
+    if (vertices.size() == 0)
+        vertices.reserve(16 * 16 * 16 * 8);
+    vertices.clear();
 
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
@@ -157,60 +149,60 @@ void Chunk::BuildMesh() {
                 if (y == 0 || GetBlock(x, y - 1, z) == 0) {
                     int i = 0;
                     for (auto& v : backFace)
-                        tempVerts.push_back({
+                        vertices.emplace_back(Vertex(
                             uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
                             1, uint8_t(i++), uint8_t(block)
-                            });
+                            ));
                 }
 
                 // Front face (+Y)
                 if (y == 15 || GetBlock(x, y + 1, z) == 0) {
                     int i = 0;
                     for (auto& v : frontFace)
-                        tempVerts.push_back({
+                        vertices.emplace_back(Vertex(
                             uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
                             0, uint8_t(i++), uint8_t(block)
-                            });
+                            ));
                 }
 
                 // Left face (−X)
                 if (x == 0 || GetBlock(x - 1, y, z) == 0) {
                     int i = 0;
                     for (auto& v : leftFace)
-                        tempVerts.push_back({
+                        vertices.emplace_back(Vertex(
                             uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
                             2, uint8_t(i++), uint8_t(block)
-                            });
+                            ));
                 }
 
                 // Right face (+X)
                 if (x == 15 || GetBlock(x + 1, y, z) == 0) {
                     int i = 0;
                     for (auto& v : rightFace)
-                        tempVerts.push_back({
+                        vertices.emplace_back(Vertex(
                             uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
                             3, uint8_t(i++), uint8_t(block)
-                            });
+                            ));
                 }
 
                 // Bottom face (−Z)
                 if (z == 0 || GetBlock(x, y, z - 1) == 0) {
                     int i = 0;
                     for (auto& v : bottomFace)
-                        tempVerts.push_back({
+                        vertices.emplace_back(Vertex(
                             uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
                             4, uint8_t(i++), uint8_t(block)
-                            });
+                            ));
                 }
 
                 // Top face (+Z)
                 if (z == 255 || GetBlock(x, y, z + 1) == 0) {
                     int i = 0;
                     for (auto& v : topFace)
-                        tempVerts.push_back({
+                        vertices.emplace_back(Vertex(
                             uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
                             5, uint8_t(i++), uint8_t(block)
-                            });
+                            ));
                 }
             }
         }
@@ -218,14 +210,17 @@ void Chunk::BuildMesh() {
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    std::cout << "BuildMesh took " << duration << " ms\n";
-    // Copy to your byte vector
-    vertices.resize(tempVerts.size() * sizeof(Vertex));
-    memcpy(vertices.data(), tempVerts.data(), vertices.size());
+    //std::cout << "BuildMesh took " << duration << " ms\n";
     meshed = true;
     meshBuildQueued = false;
 }
 
 void Chunk::SetBlock(int x, int y, int z, int ID) {
     blocks[x * (16 * 256) + y * 256 + z] = ID;
+}
+
+void Chunk::ClearGPU() {
+    //clear mesh gpu data when the chunk is deleted
+    glDeleteBuffers(1, &MeshVBO);
+    glDeleteVertexArrays(1, &MeshVAO);
 }

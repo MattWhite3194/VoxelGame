@@ -15,6 +15,7 @@
 Camera camera;
 ThreadPool generationPool(std::thread::hardware_concurrency() - 1 / 2);
 ThreadPool meshingPool(std::thread::hardware_concurrency() - 1 / 2);
+ThreadPool worldUpdatePool(1);
 double lastX = 0.0, lastY = 0.0;
 bool firstMouse = true;
 float deltaTime = 0.0f;
@@ -23,6 +24,9 @@ int viewportWidth = 1000, viewportHeight = 1000;
 glm::mat4 Projection = glm::perspective(glm::radians(51.0f),
     (float)viewportWidth / (float)viewportHeight,
     0.1f, 1000.0f);
+int renderDistance = 32;
+std::mutex cleanupMutex;
+std::vector<Chunk*> cleanupQueue;
 
 
 struct IVec2Hash {
@@ -71,6 +75,33 @@ void process_input(GLFWwindow* window) {
         camera.ProcessKeyboard(UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
+}
+
+
+void CheckChunksForDeletion() {
+    for (const auto& pair : worldChunks) {
+        glm::vec2 position = pair.first;
+        Chunk* chunk = pair.second;
+        if (chunk && chunk->scheduledForDeletion)
+            continue;
+        if (glm::distance(chunk->position, glm::vec2(camera.Position / 16.0f)) > renderDistance + 2) {
+            chunk->scheduledForDeletion = true;
+            std::lock_guard<std::mutex> lock(cleanupMutex);
+            cleanupQueue.push_back(chunk);
+        }
+    }
+}
+
+void ProcessChunkCleanup() {
+    std::lock_guard<std::mutex> lock(cleanupMutex);
+
+    for (Chunk* chunk : cleanupQueue) {
+        worldChunks.erase(chunk->position);
+        delete chunk;
+        //std::cout << "Chunk Deleted" << std::endl;
+    }
+
+    cleanupQueue.clear();
 }
 
 int main()
@@ -136,17 +167,27 @@ int main()
         int y = 0;
         int dx = 0;
         int dy = -1;
-        int maxDistance = 90;
 
-        for (int i = 0; i < maxDistance * maxDistance; i++) { 
+        //Free any chunks in cleanup buffer
+        ProcessChunkCleanup();
+        worldUpdatePool.enqueue(CheckChunksForDeletion);
+        for (int i = 0; i < renderDistance * renderDistance; i++) { 
             glm::ivec2 position(camera.Position.x / 16.0f + x, camera.Position.y / 16.0f + y);
             Chunk* chunk = worldChunks[position];
+            //Don't operate on the chunk if it has been scheduled for deletion
             if (chunk) {
+                //Do nothing if the chunk hasn't been generated yet
                 if (!chunk->generated)
                     continue;
+
+                if (chunk->scheduledForDeletion)
+                    continue;
+
+                //render the chunk if it has a valid mesh
                 if (chunk->meshed)
                     chunk->Render(blockShader);
                 else if (!chunk->meshBuildQueued) {
+                    //Update the chunks neighbors when the mesh is built so it can access the neighbor chunks for proper face culling
                     auto it = worldChunks.find(position + glm::ivec2(0, 1));
                     if (it != worldChunks.end())
                         chunk->NorthNeighbor = it->second;
@@ -169,6 +210,7 @@ int main()
                 }
             }
             else {
+                //If chunk is nullptr, create the chunk and add it's generation to the generation ThreadPool
                 worldChunks[position] = new Chunk();
                 Chunk* newChunk = worldChunks[position];
                 newChunk->position = position;

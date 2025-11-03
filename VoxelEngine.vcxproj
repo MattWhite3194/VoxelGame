@@ -22,7 +22,7 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{1006c3a5-e85d-4a45-8bbb-13f6317218fe}</ProjectGuid>
-    <RootNamespace>MinecraftClone</RootNamespace>
+    <RootNamespace>VoxelEngine</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -71,12 +71,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Users\matth\source\repos\MinecraftClone\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\matth\source\repos\MinecraftClone\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\matth\source\repos\VoxelEngine\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\matth\source\repos\VoxelEngine\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\matth\source\repos\MinecraftClone\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\matth\source\repos\MinecraftClone\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\matth\source\repos\VoxelEngine\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\matth\source\repos\VoxelEngine\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -139,7 +139,7 @@
   <ItemGroup>
     <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="glad.c" />
-    <ClCompile Include="MinecraftClone.cpp" />
+    <ClCompile Include="VoxelEngine.cpp" />
     <ClCompile Include="SimplexNoise.cpp" />
   </ItemGroup>
   <ItemGroup>
