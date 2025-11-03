@@ -21,10 +21,10 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0;
 int viewportWidth = 1000, viewportHeight = 1000;
-glm::mat4 Projection = glm::perspective(glm::radians(51.0f),
+glm::mat4 Projection = glm::perspective(glm::radians(70.0f),
     (float)viewportWidth / (float)viewportHeight,
     0.1f, 1000.0f);
-int renderDistance = 32;
+int renderDistance = 64;
 std::mutex cleanupMutex;
 std::vector<Chunk*> cleanupQueue;
 
@@ -134,6 +134,8 @@ int main()
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //create first 9 chunks that the player is standing on
     for (int x = -1; x <= 1; x++) {
@@ -161,6 +163,7 @@ int main()
         textureAtlas.Bind();
         blockShader.setMat4("projection", Projection);
         blockShader.setMat4("view", camera.GetViewMatrix());
+        blockShader.setVec3("CameraPos", camera.Position);
 
         //loop through chunks in spiral starting from player position
         int x = 0;
