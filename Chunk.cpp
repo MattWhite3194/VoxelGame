@@ -105,6 +105,14 @@ void Chunk::Render(Shader& shader) {
 }
 
 void Chunk::BuildMesh() {
+    if ((!NorthNeighbor || !NorthNeighbor->generated.load()) ||
+        (!SouthNeighbor || !SouthNeighbor->generated.load()) ||
+        (!EastNeighbor || !EastNeighbor->generated.load()) ||
+        (!WestNeighbor || !WestNeighbor->generated.load())
+        ) {
+        meshBuildQueued.store(false);
+        return;
+    }
     // Reserve space for all possible faces once
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -122,22 +130,37 @@ void Chunk::BuildMesh() {
 
                 glm::ivec3 position(x, y, z);
                 // Back face (−Y)
-                if (y == 0 || GetBlock(x, y - 1, z) == 0) {
-                    AddFace(backFace, position, 1, block);
+                if (y == 0) {
+                    if (SouthNeighbor->GetBlock(x, 15, z) == 0) 
+                        AddFace(backFace, position, 1, block);
                 }
+                else if (GetBlock(x, y - 1, z) == 0)
+                    AddFace(backFace, position, 1, block);
 
                 // Front face (+Y)
-                if (y == 15 || GetBlock(x, y + 1, z) == 0) {
+                if (y == 15) {
+                    if (NorthNeighbor->GetBlock(x, 0, z) == 0)
+                        AddFace(frontFace, position, 0, block);
+                }
+                else if (GetBlock(x, y + 1, z) == 0) {
                     AddFace(frontFace, position, 0, block);
                 }
 
                 // Left face (−X)
-                if (x == 0 || GetBlock(x - 1, y, z) == 0) {
+                if (x == 0) {
+                    if (WestNeighbor && WestNeighbor->GetBlock(15, y, z) == 0)
+                        AddFace(leftFace, position, 2, block);
+                }
+                else if (GetBlock(x - 1, y, z) == 0) {
                     AddFace(leftFace, position, 2, block);
                 }
 
                 // Right face (+X)
-                if (x == 15 || GetBlock(x + 1, y, z) == 0) {
+                if (x == 15) {
+                    if (EastNeighbor && EastNeighbor->GetBlock(0, y, z) == 0)
+                        AddFace(rightFace, position, 3, block);
+                }
+                else if (GetBlock(x + 1, y, z) == 0) {
                     AddFace(rightFace, position, 3, block);
                 }
 
@@ -160,6 +183,7 @@ void Chunk::BuildMesh() {
     //std::cout << "BuildMesh took " << duration << " ms\n";
 
     stagingVertices.shrink_to_fit();
+    requiresRemesh.store(false);
     meshBuildQueued.store(false);
 }
 

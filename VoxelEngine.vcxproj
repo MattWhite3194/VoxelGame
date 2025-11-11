@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Chunk.cpp" />
+    <ClCompile Include="ChunkManager.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="VoxelEngine.cpp" />
     <ClCompile Include="SimplexNoise.cpp" />
@@ -146,6 +147,7 @@
     <ClInclude Include="Block.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Chunk.hpp" />
+    <ClInclude Include="ChunkManager.h" />
     <ClInclude Include="SimplexNoise.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
