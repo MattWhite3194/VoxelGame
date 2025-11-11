@@ -10,64 +10,64 @@
 
 SimplexNoise Chunk::terrainNoise(0.1f);
 
-glm::u8vec3 frontFace[] = {
-    glm::u8vec3(0, 1, 0),  // v0 bottom-left
-    glm::u8vec3(1, 1, 0),  // v1 bottom-right
-    glm::u8vec3(0, 1, 1),  // v2 top-left
+const uint8_t frontFace[] = {
+    0, 1, 0,  // v0 bottom-left
+    1, 1, 0,  // v1 bottom-right
+    0, 1, 1,  // v2 top-left
 
-    glm::u8vec3(0, 1, 1),  // v2 top-left
-    glm::u8vec3(1, 1, 0),  // v1 bottom-right
-    glm::u8vec3(1, 1, 1),  // v3 top-right
+    0, 1, 1,  // v2 top-left
+    1, 1, 0,  // v1 bottom-right
+    1, 1, 1,  // v3 top-right
 };
 
-glm::u8vec3 backFace[] = {
-    glm::u8vec3(1, 0, 0),  // v0 bottom-right
-    glm::u8vec3(0, 0, 0),  // v1 bottom-left
-    glm::u8vec3(1, 0, 1),  // v2 top-right
+const uint8_t backFace[] = {
+    1, 0, 0,  // v0 bottom-right
+    0, 0, 0,  // v1 bottom-left
+    1, 0, 1,  // v2 top-right
 
-    glm::u8vec3(1, 0, 1),  // v2 top-right
-    glm::u8vec3(0, 0, 0),  // v1 bottom-left
-    glm::u8vec3(0, 0, 1),  // v3 top-left
+    1, 0, 1,  // v2 top-right
+    0, 0, 0,  // v1 bottom-left
+    0, 0, 1,  // v3 top-left
 };
 
-glm::u8vec3 leftFace[] = {
-    glm::u8vec3(0, 0, 0),  // v0 bottom-back
-    glm::u8vec3(0, 1, 0),  // v1 bottom-front
-    glm::u8vec3(0, 0, 1),  // v2 top-back
+const uint8_t leftFace[] = {
+    0, 0, 0,  // v0 bottom-back
+    0, 1, 0,  // v1 bottom-front
+    0, 0, 1,  // v2 top-back
 
-    glm::u8vec3(0, 0, 1),  // v2 top-back
-    glm::u8vec3(0, 1, 0),  // v1 bottom-front
-    glm::u8vec3(0, 1, 1),  // v3 top-front
+    0, 0, 1,  // v2 top-back
+    0, 1, 0,  // v1 bottom-front
+    0, 1, 1,  // v3 top-front
 };
 
-glm::u8vec3 rightFace[] = {
-    glm::u8vec3(1, 1, 0),  // v0 bottom-front
-    glm::u8vec3(1, 0, 0),  // v1 bottom-back
-    glm::u8vec3(1, 1, 1),  // v2 top-front
+const uint8_t rightFace[] = {
+    1, 1, 0,  // v0 bottom-front
+    1, 0, 0,  // v1 bottom-back
+    1, 1, 1,  // v2 top-front
 
-    glm::u8vec3(1, 1, 1),  // v2 top-front
-    glm::u8vec3(1, 0, 0),  // v1 bottom-back
-    glm::u8vec3(1, 0, 1),  // v3 top-back
+    1, 1, 1,  // v2 top-front
+    1, 0, 0,  // v1 bottom-back
+    1, 0, 1,  // v3 top-back
 };
 
-glm::u8vec3 bottomFace[] = {
-    glm::u8vec3(0, 0, 0),  // v0 back-left
-    glm::u8vec3(1, 0, 0),  // v1 back-right
-    glm::u8vec3(0, 1, 0),  // v2 front-left
+const uint8_t bottomFace[] = {
+    0, 0, 0,  // v0 back-left
+    1, 0, 0,  // v1 back-right
+    0, 1, 0,  // v2 front-left
 
-    glm::u8vec3(0, 1, 0),  // v2 front-left
-    glm::u8vec3(1, 0, 0),  // v1 back-right
-    glm::u8vec3(1, 1, 0),  // v3 front-right
+    0, 1, 0,  // v2 front-left
+    1, 0, 0,  // v1 back-right
+    1, 1, 0,  // v3 front-right
 };
 
-glm::u8vec3 topFace[] = {
-    glm::u8vec3(0, 1, 1),  // v0 front-left
-    glm::u8vec3(1, 1, 1),  // v1 front-right
-    glm::u8vec3(0, 0, 1),  // v2 back-left
+const uint8_t topFace[] = {
+    0, 1, 1,  // v0 front-left
+    1, 1, 1,  // v1 front-right
+    0, 0, 1,  // v2 back-left
 
-    glm::u8vec3(0, 0, 1),  // v2 back-left
-    glm::u8vec3(1, 1, 1),  // v1 front-right
-    glm::u8vec3(1, 0, 1)   // v3 back-right
+    0, 0, 1,  // v2 back-left
+    1, 1, 1,  // v1 front-right
+    1, 0, 1   // v3 back-right
 };
 
 void Chunk::Generate() {
@@ -90,36 +90,11 @@ void Chunk::Generate() {
             }
         }
     }
-    generated = true;
+    generated.store(true);
+    requiresRemesh.store(true);
 }
 
 void Chunk::Render(Shader& shader) {
-    if (!MeshVAO || !MeshVBO) {
-        glGenVertexArrays(1, &MeshVAO);
-        glGenBuffers(1, &MeshVBO);
-        //bind VAO
-        glBindVertexArray(MeshVAO);
-
-        //bind VBO
-        glBindBuffer(GL_ARRAY_BUFFER, MeshVBO);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-
-        //position attrbute
-        glVertexAttribPointer(0, 3, GL_UNSIGNED_BYTE, GL_FALSE, 6 * sizeof(uint8_t), (void*)0);
-        glEnableVertexAttribArray(0);
-        //face index
-        glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 6 * sizeof(uint8_t), (void*)(3 * sizeof(uint8_t)));
-        glEnableVertexAttribArray(1);
-        //tex index
-        glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 6 * sizeof(uint8_t), (void*)(4 * sizeof(uint8_t)));
-        glEnableVertexAttribArray(2);
-        //block id
-        glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 6 * sizeof(uint8_t), (void*)(5 * sizeof(uint8_t)));
-        glEnableVertexAttribArray(3);
-
-        glBindVertexArray(0);
-    }
-
     shader.use();
     glm::mat4 model(1.0f);
     model = glm::translate(model, glm::vec3(position * 16.0f, 0.0f));
@@ -133,9 +108,9 @@ void Chunk::BuildMesh() {
     // Reserve space for all possible faces once
     auto start = std::chrono::high_resolution_clock::now();
 
-    if (vertices.size() == 0)
-        vertices.reserve(16 * 16 * 16 * 8);
-    vertices.clear();
+    //if (vertices.size() == 0)
+        //vertices.reserve(16 * 16 * 16 * 8);
+    stagingVertices.clear();
 
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
@@ -145,64 +120,35 @@ void Chunk::BuildMesh() {
                 if (block == 0)
                     continue;
 
+                glm::ivec3 position(x, y, z);
                 // Back face (−Y)
                 if (y == 0 || GetBlock(x, y - 1, z) == 0) {
-                    int i = 0;
-                    for (auto& v : backFace)
-                        vertices.emplace_back(Vertex(
-                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
-                            1, uint8_t(i++), uint8_t(block)
-                            ));
+                    AddFace(backFace, position, 1, block);
                 }
 
                 // Front face (+Y)
                 if (y == 15 || GetBlock(x, y + 1, z) == 0) {
-                    int i = 0;
-                    for (auto& v : frontFace)
-                        vertices.emplace_back(Vertex(
-                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
-                            0, uint8_t(i++), uint8_t(block)
-                            ));
+                    AddFace(frontFace, position, 0, block);
                 }
 
                 // Left face (−X)
                 if (x == 0 || GetBlock(x - 1, y, z) == 0) {
-                    int i = 0;
-                    for (auto& v : leftFace)
-                        vertices.emplace_back(Vertex(
-                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
-                            2, uint8_t(i++), uint8_t(block)
-                            ));
+                    AddFace(leftFace, position, 2, block);
                 }
 
                 // Right face (+X)
                 if (x == 15 || GetBlock(x + 1, y, z) == 0) {
-                    int i = 0;
-                    for (auto& v : rightFace)
-                        vertices.emplace_back(Vertex(
-                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
-                            3, uint8_t(i++), uint8_t(block)
-                            ));
+                    AddFace(rightFace, position, 3, block);
                 }
 
                 // Bottom face (−Z)
                 if (z == 0 || GetBlock(x, y, z - 1) == 0) {
-                    int i = 0;
-                    for (auto& v : bottomFace)
-                        vertices.emplace_back(Vertex(
-                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
-                            4, uint8_t(i++), uint8_t(block)
-                            ));
+                    AddFace(bottomFace, position, 4, block);
                 }
 
                 // Top face (+Z)
                 if (z == 255 || GetBlock(x, y, z + 1) == 0) {
-                    int i = 0;
-                    for (auto& v : topFace)
-                        vertices.emplace_back(Vertex(
-                            uint8_t(v.x + x), uint8_t(v.y + y), uint8_t(v.z + z),
-                            5, uint8_t(i++), uint8_t(block)
-                            ));
+                    AddFace(topFace, position, 5, block);
                 }
             }
         }
@@ -210,13 +156,51 @@ void Chunk::BuildMesh() {
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
     //std::cout << "BuildMesh took " << duration << " ms\n";
-    meshed = true;
-    meshBuildQueued = false;
+
+    stagingVertices.shrink_to_fit();
+    meshBuildQueued.store(false);
+}
+
+void Chunk::AddFace(const uint8_t(&face)[18], const glm::ivec3& position, uint8_t texIndex, uint8_t blockID) {
+    for (int i = 0; i < 6; i++)
+        stagingVertices.push_back(Vertex(
+            face[i * 3] + position.x, face[i * 3 + 1] + position.y, face[i * 3 + 2] + position.z,
+            texIndex, i, blockID
+        ));
 }
 
 void Chunk::SetBlock(int x, int y, int z, int ID) {
     blocks[x * (16 * 256) + y * 256 + z] = ID;
+}
+
+void Chunk::UploadToGPU() {
+    vertices.clear();
+    vertices = std::move(stagingVertices);
+    glGenVertexArrays(1, &MeshVAO);
+    glGenBuffers(1, &MeshVBO);
+    //bind VAO
+    glBindVertexArray(MeshVAO);
+
+    //bind VBO
+    glBindBuffer(GL_ARRAY_BUFFER, MeshVBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+    //position attrbute
+    glVertexAttribPointer(0, 3, GL_UNSIGNED_BYTE, GL_FALSE, 6 * sizeof(uint8_t), (void*)0);
+    glEnableVertexAttribArray(0);
+    //face index
+    glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 6 * sizeof(uint8_t), (void*)(3 * sizeof(uint8_t)));
+    glEnableVertexAttribArray(1);
+    //tex index
+    glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 6 * sizeof(uint8_t), (void*)(4 * sizeof(uint8_t)));
+    glEnableVertexAttribArray(2);
+    //block id
+    glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 6 * sizeof(uint8_t), (void*)(5 * sizeof(uint8_t)));
+    glEnableVertexAttribArray(3);
+
+    glBindVertexArray(0);
 }
 
 void Chunk::ClearGPU() {

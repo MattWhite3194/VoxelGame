@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include "Shader.h"
 #include "SimplexNoise.h"
+#include <optional>
+#include <mutex>
 
 struct Vertex {
 	uint8_t x, y, z;
@@ -28,39 +30,40 @@ struct Chunk {
 	/// The mesh vertex data that is uploaded to the gpu
 	/// </summary>
 	std::vector<Vertex> vertices;
+	//thread safety, used only by worker thread when building mesh
+	std::vector<Vertex> stagingVertices;
+	std::mutex meshMutex;
 	Chunk* NorthNeighbor = nullptr;
 	Chunk* EastNeighbor = nullptr;
 	Chunk* SouthNeighbor = nullptr;
 	Chunk* WestNeighbor = nullptr;
+
+	//Thread Safety
+	std::atomic<bool> generated{ false };
 	/// <summary>
-	/// Thread safety. True if the generation operation has already been scheduled.
+	/// True if the mesh operation has already been scheduled.
 	/// </summary>
-	bool generated = false;
+	std::atomic<bool> meshBuildQueued{ false };
 	/// <summary>
-	/// Thread safety. True if the mesh operation has already been scheduled.
+	/// True if the mesh data has been uploaded to the gpu
 	/// </summary>
-	bool meshBuildQueued = false;
+	std::atomic<bool> uploadComplete{ false };
 	/// <summary>
-	/// True if the chunk has a valid mesh
+	/// True if the mesh needs to be rebuilt after an update
 	/// </summary>
-	bool meshed = false;
-	/// <summary>
-	/// True if the mesh needs to be rebuilt
-	/// </summary>
-	bool meshDirty = false;
-	/// <summary>
-	/// Thread safety. True if the chunk has been scheduled for deletion
-	/// </summary>
-	bool scheduledForDeletion = false;
+	std::atomic<bool> requiresRemesh{ false };
+	std::atomic<bool> scheduledForDeletion{ false };
 	GLuint MeshVAO = 0, MeshVBO = 0;
 	void Generate();
 	void Render(Shader& shader);
 	void BuildMesh();
+	void AddFace(const uint8_t(&face)[18], const glm::ivec3& position, uint8_t texIndex, uint8_t blockID);
 	inline int GetBlock(int x, int y, int z) const noexcept {
     // Fast path, no branching if you already guarantee valid ranges (0–15, 0–15, 0–255)
 		return blocks[x * (16 * 256) + y * 256 + z];
 	}
 	void SetBlock(int x, int y, int z, int ID);
+	void UploadToGPU();
 	void ClearGPU();
 	~Chunk() {
 		ClearGPU();

@@ -10,7 +10,7 @@ uniform vec3 CameraPos;
 uniform sampler2D TextureAtlas;
 uniform vec3 globalLightDirection = vec3(0.9, 0.8, 1.0);
 uniform vec3 globalLightOpposite = vec3(-0.8, -0.7, -0.2);
-uniform float fadeStartDistance = 32 * 16 - 10;
+uniform float fadeStartDistance;
 
 void main()
 {

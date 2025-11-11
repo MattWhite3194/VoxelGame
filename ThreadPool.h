@@ -19,7 +19,7 @@ public:
                         cv.wait(lock, [this] { 
                             return !jobs.empty() || stop; 
                         });
-                        if (stop && jobs.empty())
+                        if (stop)
                             return;
                         job = std::move(jobs.front());
                         jobs.pop();
@@ -30,13 +30,17 @@ public:
         }
     }
 
-    ~ThreadPool() {
+    void join() {
         {
-            std::lock_guard<std::mutex> lock(mtx);
+            std::unique_lock<std::mutex> lock(mtx);
             stop = true;
         }
         cv.notify_all();
         for (auto& t : workers) t.join();
+        workers.clear();
+    }
+    ~ThreadPool() {
+        join();
     }
 
     void enqueue(std::function<void()> job) {
@@ -45,10 +49,6 @@ public:
             jobs.push(std::move(job));
         }
         cv.notify_one();
-    }
-
-    bool Busy() {
-        return !jobs.empty();
     }
 
 private:
