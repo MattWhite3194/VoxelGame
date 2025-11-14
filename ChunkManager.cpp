@@ -1,23 +1,5 @@
 #include "ChunkManager.h"
 
-void ChunkManager::Init() {
-	generationPool = std::make_unique<ThreadPool>(1);
-	meshingPool = std::make_unique<ThreadPool>(1);
-	worldUpdatePool = std::make_unique<ThreadPool>(1);
-
-    //TODO: update based on where the player position starts at
-    //create first 9 chunks that the player is standing on
-    for (int x = -1; x <= 1; x++) {
-        for (int y = -1; y <= 1; y++) {
-            glm::ivec2 position(x, y);
-            worldChunks[position] = new Chunk();
-            Chunk* newChunk = worldChunks[position];
-            newChunk->position = position;
-            newChunk->Generate();
-        }
-    }
-}
-
 void ChunkManager::Update(const glm::vec3& playerPosition, Shader& blockShader) {
     if (!clearingChunks.load()) {
         worldUpdatePool->enqueue([this, playerPosition] {
@@ -168,8 +150,20 @@ void ChunkManager::Terminate() {
 }
 
 int ChunkManager::GetGlobalBlock(const glm::ivec3& position) {
-    glm::ivec2 chunkPos(position.x / 16.0f, position.y / 16.0f);
+    int chunkX = static_cast<int>(std::floor(position.x / 16.0f));
+    int chunkY = static_cast<int>(std::floor(position.y / 16.0f));
+
+    glm::ivec2 chunkPos(chunkX, chunkY);
     if (!worldChunks.count(chunkPos))
         return 0;
-    return worldChunks[chunkPos]->GetBlock(position.x, position.y, position.z);
+    Chunk* chunk = worldChunks[chunkPos];
+    if (!chunk->generated.load())
+        return 0;
+    int x = position.x % 16;
+    if (x < 0)
+        x += 16;
+    int y = position.y % 16;
+    if (y < 0)
+        y += 16;
+    return chunk->GetBlock(x, y, position.z);
 }

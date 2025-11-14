@@ -6,9 +6,25 @@
 
 class ChunkManager {
 public:
-	int RenderDistance = 24;
-	int MaxUploadsPerFrame = 5;
-	void Init();
+	int RenderDistance = 48;
+	int MaxUploadsPerFrame = 10;
+	ChunkManager() {
+		generationPool = std::make_unique<ThreadPool>(1);
+		meshingPool = std::make_unique<ThreadPool>(1);
+		worldUpdatePool = std::make_unique<ThreadPool>(1);
+
+		//TODO: update based on where the player position starts at
+		//create first 9 chunks that the player is standing on
+		for (int x = -1; x <= 1; x++) {
+			for (int y = -1; y <= 1; y++) {
+				glm::ivec2 position(x, y);
+				worldChunks[position] = new Chunk();
+				Chunk* newChunk = worldChunks[position];
+				newChunk->position = position;
+				newChunk->Generate();
+			}
+		}
+	}
 	void Update(const glm::vec3 &playerPosition, Shader& blockShader);
 	void Terminate();
 	int GetGlobalBlock(const glm::ivec3& position);

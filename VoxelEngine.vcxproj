@@ -148,6 +148,10 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Chunk.hpp" />
     <ClInclude Include="ChunkManager.h" />
+    <ClInclude Include="CollisionShape.h" />
+    <ClInclude Include="Entity.h" />
+    <ClInclude Include="PhysicsEngine.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="SimplexNoise.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />

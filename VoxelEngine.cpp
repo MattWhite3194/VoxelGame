@@ -3,25 +3,26 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include "Shader.h"
-#include "Camera.h"
+#include "Player.h"
 #include "Texture.h"
 #include "ChunkManager.h"
+#include "PhysicsEngine.h"
 #include <queue>
 
 //GLFW for window management
 //Glad for initializing opengl functions with gpu driver
 //glm for linear algebra
-Camera camera;
-
 double lastX = 0.0, lastY = 0.0;
 bool firstMouse = true;
-float deltaTime = 0.0f;
-float lastFrame = 0.0;
+double deltaTime = 0.0;
+double lastFrame = 0.0;
 int viewportWidth = 1000, viewportHeight = 1000;
 glm::mat4 Projection = glm::perspective(glm::radians(70.0f),
     (float)viewportWidth / (float)viewportHeight,
     0.1f, 1000.0f);
-std::unique_ptr<ChunkManager> chunkManager;
+std::shared_ptr<ChunkManager> chunkManager;
+std::shared_ptr<Player> player;
+std::unique_ptr<PhysicsEngine> physicsEngine;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -42,26 +43,14 @@ void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
 
     double xoffset = xpos - lastX;
     double yoffset = lastY - ypos;
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    player->ProcessMouseMovement(xoffset, yoffset);
 
     lastX = xpos;
     lastY = ypos;
 }
 
-void process_input(GLFWwindow* window) {
-    float cameraSpeed = static_cast<float>(2.5 * deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        camera.ProcessKeyboard(UP, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        camera.ProcessKeyboard(DOWN, deltaTime);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    player->HandleKeyboardInput(window, key, scancode, action, mods);
 }
 
 int main()
@@ -83,6 +72,7 @@ int main()
     //attach callback functions
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, cursor_pos_callback);
+    glfwSetKeyCallback(window, key_callback);
 
     Shader blockShader("block.vert", "block.frag");
     Texture textureAtlas("terrain.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
@@ -97,29 +87,25 @@ int main()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    
-    camera.Position = glm::vec3(0.0f, 0.0f, 80.0f);
-    chunkManager = std::make_unique<ChunkManager>();
-    chunkManager->Init();
+    player = std::make_shared<Player>(glm::vec3(5.0f, 5.0f, 100.0f));
+    chunkManager = std::make_shared<ChunkManager>();
+    physicsEngine = std::make_unique<PhysicsEngine>(player, chunkManager);
     //main window loop
     
     while (!glfwWindowShouldClose(window)) {
         //calculate delta time
-        float currentFrame = static_cast<float>(glfwGetTime());
+        double currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        //std::cout << 1.0f / deltaTime << std::endl;
-        process_input(window);
+        physicsEngine->Update(deltaTime);
         glClearColor(0.0f, 0.54f, 0.84f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         textureAtlas.Bind();
         blockShader.setMat4("projection", Projection);
-        blockShader.setMat4("view", camera.GetViewMatrix());
-        blockShader.setVec3("CameraPos", camera.Position);
+        blockShader.setMat4("view", player->GetView());
+        blockShader.setVec3("CameraPos", player->GetPosition());
         blockShader.setFloat("fadeStartDistance", chunkManager->RenderDistance * 16 - 20);
-
-        chunkManager->Update(camera.Position, blockShader);
+        chunkManager->Update(player->GetPosition(), blockShader);
 
         glfwPollEvents();
         glfwSwapBuffers(window);

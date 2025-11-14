@@ -8,7 +8,7 @@
 //On generation, create a vertex buffer of the vertices in the geometry, that way only one draw call is needed to render the entire chunk
 //check each block and it's surrounding face to determine which vertices to add
 
-SimplexNoise Chunk::terrainNoise(0.1f);
+SimplexNoise Chunk::terrainNoise(0.04f);
 
 const uint8_t frontFace[] = {
     0, 1, 0,  // v0 bottom-left
@@ -74,16 +74,23 @@ void Chunk::Generate() {
 	blocks = std::vector<int>(16 * 16 * 256, 0);
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
-            int height = (int)(30 * terrainNoise.fractal(3, x / 16.0f + (float)position.x, y / 16.0f + (float)position.y));
-            for (int z = 40 + height; z >= 0; z--) {
-                /*Blocks
-                * 3 grass
-                * 2 dirt
-                * 1 stone
-                */
-                if (z == 40 + height)
+            //Generation for physics testing
+            //for (int z = 120; z >= 0; z--) {
+            //    if (x > 7 && x < 10 && y > 7 && y < 10 || z < 30)
+            //        SetBlock(x, y, z, 1);
+            //}
+            
+
+            int height = (int)(50 * terrainNoise.fractal(5, x / 16.0f + (float)position.x, y / 16.0f + (float)position.y));
+            for (int z = 100 + height; z >= 0; z--) {
+                //Blocks
+                //3 grass
+                //2 dirt
+                //1 stone
+                
+                if (z == 60 + height)
                     SetBlock(x, y, z, 3);
-                else if (z > height + 36)
+                else if (z > height + 56)
                     SetBlock(x, y, z, 2);
                 else
                     SetBlock(x, y, z, 1);
