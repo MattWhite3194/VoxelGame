@@ -21,6 +21,8 @@ public:
 		return _camera->GetViewMatrix();
 	}
 	void Update(double delta) override {
+		_localVelocity.x = glm::dot(glm::vec2(Velocity), glm::vec2(_camera->Right));
+		_localVelocity.y = glm::dot(glm::vec2(Velocity), glm::vec2(_camera->Forward));
 		glm::vec2 direction = glm::vec2(0.0f);
 		if (_activeInputs.count(GLFW_KEY_W)) {
 			direction.y += 1.0f;
@@ -36,22 +38,20 @@ public:
 		}
 		if (direction != glm::vec2(0.0f))
 			direction = glm::normalize(direction);
-		if (direction.x != 0) {
+		if (direction.x != 0.0f) {
 			_localVelocity.x += _acceleration * delta * direction.x;
 		}
 		else if (_localVelocity.x != 0.0f) {
-			std::cout << "Resolving X" << std::endl;
-			int sign = glm::sign<int>(_localVelocity.x);
+			int sign = glm::sign<float>(_localVelocity.x);
 			_localVelocity.x -= _acceleration * delta * sign;
 			if (glm::sign<int>(_localVelocity.x) != sign)
 				_localVelocity.x = 0.0f;
 		}
-		if (direction.y != 0) {
+		if (direction.y != 0.0f) {
 			_localVelocity.y += _acceleration * delta * direction.y;
 		}
 		else if (_localVelocity.y != 0.0f) {
-			std::cout << "Resolving Y" << std::endl;
-			int sign = glm::sign<int>(_localVelocity.y);
+			int sign = glm::sign<float>(_localVelocity.y);
 			_localVelocity.y -= _acceleration * delta * sign;
 			if (glm::sign<int>(_localVelocity.y) != sign)
 				_localVelocity.y = 0.0f;
@@ -73,7 +73,6 @@ public:
 		if (_jumping && IsOnFloor) {
 			Velocity.z = _jumpSpeed;
 		}
-		std::cout << glm::to_string(_localVelocity) << std::endl;
 	}
 	void HandleKeyboardInput(GLFWwindow* window, int key, int scancode, int action, int mods) {
 		if (action == GLFW_RELEASE) {
