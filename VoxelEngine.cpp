@@ -16,8 +16,9 @@ double lastX = 0.0, lastY = 0.0;
 bool firstMouse = true;
 double deltaTime = 0.0;
 double lastFrame = 0.0;
-int viewportWidth = 1000, viewportHeight = 1000;
-glm::mat4 Projection = glm::perspective(glm::radians(70.0f),
+int viewportWidth = 1000, viewportHeight = 600;
+float fov = 70.0f;
+glm::mat4 Projection = glm::perspective(glm::radians(fov),
     (float)viewportWidth / (float)viewportHeight,
     0.1f, 1000.0f);
 std::shared_ptr<ChunkManager> chunkManager;
@@ -26,9 +27,12 @@ std::unique_ptr<PhysicsEngine> physicsEngine;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
+    //Pressing windows key or exiting the screen while in fullscreen sends 0 width and height, which breaks projection matrix
+    if (height == 0)
+        return;
     viewportWidth = width;
     viewportHeight = height;
-    Projection = glm::perspective(glm::radians(51.0f),
+    Projection = glm::perspective(glm::radians(fov),
         (float)viewportWidth / (float)viewportHeight,
         0.1f, 1000.0f);
     glViewport(0, 0, width, height);
@@ -60,10 +64,10 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* window = glfwCreateWindow(1000, 1000, "Minecraft", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(viewportWidth, viewportHeight, "Minecraft", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate;
+        glfwTerminate();
         return -1;
     }
     glfwMakeContextCurrent(window);
@@ -91,6 +95,10 @@ int main()
     chunkManager = std::make_shared<ChunkManager>();
     physicsEngine = std::make_unique<PhysicsEngine>(player, chunkManager);
     //main window loop
+
+    //GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    //const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    //glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
     
     while (!glfwWindowShouldClose(window)) {
         //calculate delta time

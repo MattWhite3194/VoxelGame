@@ -81,16 +81,17 @@ void Chunk::Generate() {
             //}
             
 
-            int height = (int)(50 * terrainNoise.fractal(5, x / 16.0f + (float)position.x, y / 16.0f + (float)position.y));
-            for (int z = 100 + height; z >= 0; z--) {
+            int terrainHeight = (int)(50 * terrainNoise.fractal(5, x / 16.0f + (float)position.x, y / 16.0f + (float)position.y));
+            int totalHeight = 60 + terrainHeight;
+            for (int z = totalHeight; z >= 0; z--) {
                 //Blocks
                 //3 grass
                 //2 dirt
                 //1 stone
                 
-                if (z == 60 + height)
+                if (z == totalHeight)
                     SetBlock(x, y, z, 3);
-                else if (z > height + 56)
+                else if (z > totalHeight - 3)
                     SetBlock(x, y, z, 2);
                 else
                     SetBlock(x, y, z, 1);
