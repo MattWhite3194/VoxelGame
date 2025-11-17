@@ -1,4 +1,4 @@
-#include "ChunkManager.h"
+#include "World/ChunkManager.h"
 
 void ChunkManager::Update(const glm::vec3& playerPosition, Shader& blockShader) {
     if (!clearingChunks.load()) {

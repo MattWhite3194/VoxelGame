@@ -1,91 +1,106 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Resource Files\Shaders">
-      <UniqueIdentifier>{e8f0964e-2f5e-4189-bc64-ebeddd689603}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\Textures">
-      <UniqueIdentifier>{ad9a58fd-96df-4c0f-9dc8-033f4b01f14b}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="glad.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Chunk.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SimplexNoise.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VoxelEngine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ChunkManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Block.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\World\Chunk.h">
+      <Filter>src\World</Filter>
     </ClInclude>
-    <ClInclude Include="Chunk.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\World\ChunkManager.h">
+      <Filter>src\World</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\OpenGL\Shader.h">
+      <Filter>src\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\OpenGL\Texture.h">
+      <Filter>src\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\OpenGL\Camera.h">
+      <Filter>src\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="ThreadPool.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\World\Generation\SimplexNoise.h">
+      <Filter>src\World\Generation</Filter>
     </ClInclude>
-    <ClInclude Include="SimplexNoise.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Thread\ThreadPool.h">
+      <Filter>src\Thread</Filter>
     </ClInclude>
-    <ClInclude Include="ChunkManager.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Physics\CollisionShape.h">
+      <Filter>src\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="PhysicsEngine.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Physics\PhysicsEngine.h">
+      <Filter>src\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="Entity.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Entities\Entity.h">
+      <Filter>src\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Player.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionShape.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Entities\Player.h">
+      <Filter>src\Entities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="block.frag">
-      <Filter>Resource Files\Shaders</Filter>
+    <ClCompile Include="src\glad.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VoxelEngine.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\World\Chunk.cpp">
+      <Filter>src\World</Filter>
+    </ClCompile>
+    <ClCompile Include="src\World\ChunkManager.cpp">
+      <Filter>src\World</Filter>
+    </ClCompile>
+    <ClCompile Include="src\World\Generation\SimplexNoise.cpp">
+      <Filter>src\World\Generation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Physics\PhysicsEngine.cpp">
+      <Filter>src\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Entities\Player.cpp">
+      <Filter>src\Entities</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{3e9b6e2b-977d-47a6-8892-a450d4ff0448}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="res">
+      <UniqueIdentifier>{1e34d070-2c79-4c7b-867b-95c4cf384d57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="res\textures">
+      <UniqueIdentifier>{a4d99a55-038d-44c9-9194-479d480fdf08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="res\shaders">
+      <UniqueIdentifier>{51d0c62c-817b-41aa-89be-a027df5f7283}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\World">
+      <UniqueIdentifier>{5d8009da-86dd-44f3-958b-b5dfb0ff8cbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Thread">
+      <UniqueIdentifier>{01e4f2ba-ad57-4059-9341-9c9626db29f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\OpenGL">
+      <UniqueIdentifier>{d4640ee1-ae14-4622-9f12-451559f3f260}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\World\Generation">
+      <UniqueIdentifier>{879854f5-ff99-486b-b853-e1cd243cc139}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Physics">
+      <UniqueIdentifier>{d66b910a-4a04-45d1-8842-2ad938f92ca9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Entities">
+      <UniqueIdentifier>{f4899271-e939-4e20-aeb3-bb00e25e02f6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\shaders\block.frag">
+      <Filter>res\shaders</Filter>
     </None>
-    <None Include="block.vert">
-      <Filter>Resource Files\Shaders</Filter>
+    <None Include="res\shaders\block.vert">
+      <Filter>res\shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="terrain.png">
-      <Filter>Resource Files\Textures</Filter>
+    <Image Include="res\textures\terrain.png">
+      <Filter>res\textures</Filter>
     </Image>
   </ItemGroup>
 </Project>

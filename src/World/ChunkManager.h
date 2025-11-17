@@ -1,8 +1,8 @@
 #pragma once
-#include "ThreadPool.h"
-#include "Chunk.hpp"
+#include "Thread/ThreadPool.h"
+#include "World/Chunk.h"
 #include <glm/glm.hpp>
-#include "Shader.h"
+#include "OpenGL/Shader.h"
 
 class ChunkManager {
 public:

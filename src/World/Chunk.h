@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
 #include <unordered_map>
-#include "Shader.h"
-#include "SimplexNoise.h"
+#include "OpenGL/Shader.h"
+#include "Generation/SimplexNoise.h"
 #include <optional>
 #include <mutex>
 
@@ -15,7 +15,9 @@ struct Vertex {
 };
 
 struct Chunk {
-	static SimplexNoise terrainNoise;
+	static SimplexNoise hillNoise;
+	static SimplexNoise mountainNoise;
+	static SimplexNoise ridgeNoise;
 	/// <summary>
 	/// The position of the chunk in the world. 
 	/// Chunks are every 16 tiles. 

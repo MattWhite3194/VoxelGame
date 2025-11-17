@@ -18,6 +18,35 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Entities\Entity.h" />
+    <ClInclude Include="src\Entities\Player.h" />
+    <ClInclude Include="src\OpenGL\Camera.h" />
+    <ClInclude Include="src\OpenGL\Shader.h" />
+    <ClInclude Include="src\OpenGL\Texture.h" />
+    <ClInclude Include="src\Physics\CollisionShape.h" />
+    <ClInclude Include="src\Physics\PhysicsEngine.h" />
+    <ClInclude Include="src\Thread\ThreadPool.h" />
+    <ClInclude Include="src\World\Chunk.h" />
+    <ClInclude Include="src\World\ChunkManager.h" />
+    <ClInclude Include="src\World\Generation\SimplexNoise.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Entities\Player.cpp" />
+    <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\Physics\PhysicsEngine.cpp" />
+    <ClCompile Include="src\VoxelEngine.cpp" />
+    <ClCompile Include="src\World\Chunk.cpp" />
+    <ClCompile Include="src\World\ChunkManager.cpp" />
+    <ClCompile Include="src\World\Generation\SimplexNoise.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\shaders\block.frag" />
+    <None Include="res\shaders\block.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\textures\terrain.png" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -71,12 +100,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Users\matth\source\repos\VoxelEngine\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\matth\source\repos\VoxelEngine\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)src;$(ProjectDir)include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\matth\source\repos\VoxelEngine\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\matth\source\repos\VoxelEngine\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)src;$(ProjectDir)include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>C:\Users\matth\source\repos\VoxelEngine\include;$(IncludePath)</IncludePath>
@@ -150,34 +179,6 @@
       <AdditionalDependencies>glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Chunk.cpp" />
-    <ClCompile Include="ChunkManager.cpp" />
-    <ClCompile Include="glad.c" />
-    <ClCompile Include="VoxelEngine.cpp" />
-    <ClCompile Include="SimplexNoise.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Block.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="Chunk.hpp" />
-    <ClInclude Include="ChunkManager.h" />
-    <ClInclude Include="CollisionShape.h" />
-    <ClInclude Include="Entity.h" />
-    <ClInclude Include="PhysicsEngine.h" />
-    <ClInclude Include="Player.h" />
-    <ClInclude Include="SimplexNoise.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="Texture.h" />
-    <ClInclude Include="ThreadPool.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="block.frag" />
-    <None Include="block.vert" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="terrain.png" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

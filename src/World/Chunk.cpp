@@ -1,4 +1,4 @@
-﻿#include "Chunk.hpp"
+﻿#include "World/Chunk.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
@@ -8,7 +8,9 @@
 //On generation, create a vertex buffer of the vertices in the geometry, that way only one draw call is needed to render the entire chunk
 //check each block and it's surrounding face to determine which vertices to add
 
-SimplexNoise Chunk::terrainNoise(0.04f);
+SimplexNoise Chunk::hillNoise(0.1f, 1.0f, 4.1f, 0.1f);
+SimplexNoise Chunk::mountainNoise(0.0003f, 1.0f, 2.8f, 0.45f);
+SimplexNoise Chunk::ridgeNoise(0.07f, 1.0f, 2.5f, 0.3f);
 
 const uint8_t frontFace[] = {
     0, 1, 0,  // v0 bottom-left
@@ -71,18 +73,17 @@ const uint8_t topFace[] = {
 };
 
 void Chunk::Generate() {
+    //TODO: SimplexNoise implementation is not random, get a new one.
 	blocks = std::vector<int>(16 * 16 * 256, 0);
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
-            //Generation for physics testing
-            //for (int z = 120; z >= 0; z--) {
-            //    if (x > 7 && x < 10 && y > 7 && y < 10 || z < 30)
-            //        SetBlock(x, y, z, 1);
-            //}
             
-
-            int terrainHeight = (int)(50 * terrainNoise.fractal(5, x / 16.0f + (float)position.x, y / 16.0f + (float)position.y));
-            int totalHeight = 60 + terrainHeight;
+            float worldX = x / 16.0f + (float)position.x;
+            float worldY = y / 16.0f + (float)position.y;
+            float ridge = (1.0f - std::abs(ridgeNoise.fractal(3, worldX, worldY))) * 20.0f;
+            float hill = hillNoise.fractal(2, worldX, worldY) * 10.0f;
+            float mountain = mountainNoise.fractal(5, worldX, worldY) * 120.0f;
+            int totalHeight = 120 + hill + ridge;
             for (int z = totalHeight; z >= 0; z--) {
                 //Blocks
                 //3 grass

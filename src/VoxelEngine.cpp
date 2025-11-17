@@ -2,11 +2,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include "Shader.h"
-#include "Player.h"
-#include "Texture.h"
-#include "ChunkManager.h"
-#include "PhysicsEngine.h"
+#include "OpenGL/Shader.h"
+#include "Entities/Player.h"
+#include "OpenGL/Texture.h"
+#include "World/ChunkManager.h"
+#include "Physics/PhysicsEngine.h"
 #include <queue>
 
 //GLFW for window management
@@ -64,7 +64,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* window = glfwCreateWindow(viewportWidth, viewportHeight, "Minecraft", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(viewportWidth, viewportHeight, "PHYSICS", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -78,8 +78,8 @@ int main()
     glfwSetCursorPosCallback(window, cursor_pos_callback);
     glfwSetKeyCallback(window, key_callback);
 
-    Shader blockShader("block.vert", "block.frag");
-    Texture textureAtlas("terrain.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+    Shader blockShader("res/shaders/block.vert", "res/shaders/block.frag");
+    Texture textureAtlas("res/textures/terrain.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
     textureAtlas.texUnit(blockShader, "TextureAtlas", 0);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);

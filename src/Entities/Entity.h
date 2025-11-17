@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
-#include "CollisionShape.h"
+#include <memory>
+#include "Physics/CollisionShape.h"
 
 class Entity {
 protected:
