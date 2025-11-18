@@ -14,6 +14,9 @@ uniform float fadeStartDistance;
 
 void main()
 {
+    //vec2 uv = TexCoord;
+    //float pad = 1.0 / 256.0;  // e.g. 1 / 256
+    //uv = uv * (1.0 - 2.0 * pad) + pad;
     float distanceToPlayer = distance(CameraPos, FragPos);
     float brightness = max(dot(normalize(globalLightDirection), normalize(Normal)), dot(normalize(globalLightOpposite), normalize(Normal)) * 0.7);
     float fade = 1 - max(0, (distanceToPlayer - fadeStartDistance) / 10);

@@ -91,7 +91,7 @@ int main()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    player = std::make_shared<Player>(glm::vec3(5.0f, 5.0f, 100.0f));
+    player = std::make_shared<Player>(glm::vec3(5.0f, 5.0f, 200.0f));
     chunkManager = std::make_shared<ChunkManager>();
     physicsEngine = std::make_unique<PhysicsEngine>(player, chunkManager);
     //main window loop

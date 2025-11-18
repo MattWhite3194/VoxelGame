@@ -11,6 +11,8 @@ public:
 		_entities.push_back(_player);
 	}
 	void Update(double delta);
+	void ResolveVoxelCollisions(double delta, Entity* e);
+	void ResolveEntityCollisions(double delta, Entity* e1, Entity* e2);
 private:
 	std::shared_ptr<Player> _player;
 	std::vector<std::shared_ptr<Entity>> _entities;

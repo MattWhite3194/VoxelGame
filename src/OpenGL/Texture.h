@@ -32,7 +32,8 @@ public:
 		glBindTexture(texType, ID);
 
 		// Configures the type of algorithm that is used to make the image smaller or bigger
-		glTexParameteri(texType, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(texType, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, 4);
 		glTexParameteri(texType, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 		// Configures the way the texture repeats (if it does at all)

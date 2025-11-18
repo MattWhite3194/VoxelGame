@@ -21,13 +21,14 @@ const vec3 faceNormals[6] = vec3[](
     vec3( 0.0,  0.0,  1.0)  // +Z → Top face
 );
 
+//0.0001 padding to prevent texture bleeding on mipmaps
 const vec2 texCoords[6] = vec2[](
-    vec2(0.0, 1.0 - 0.0625),
-    vec2(0.0625, 1.0 - 0.0625),
-    vec2(0.0, 1.0),
-    vec2(0.0, 1.0),
-    vec2(0.0625, 1.0 - 0.0625),
-    vec2(0.0625, 1.0)
+    vec2(0.0001, 1.0 - 0.0625 + 0.0001),
+    vec2(0.0625 - 0.0001, 1.0 - 0.0625 + 0.0001),
+    vec2(0.0001, 1.0 - 0.0001),
+    vec2(0.0001, 1.0 - 0.0001),
+    vec2(0.0625 - 0.0001, 1.0 - 0.0625 + 0.0001),
+    vec2(0.0625 - 0.0001, 1.0 - 0.0001)
 );
 
 const vec3 blockCoords[3] = vec3[](
