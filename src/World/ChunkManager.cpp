@@ -1,6 +1,8 @@
 #include "World/ChunkManager.h"
+#include <glm/gtx/string_cast.hpp>
 
 void ChunkManager::Update(const glm::vec3& playerPosition, Shader& blockShader) {
+    blockShader.use();
     if (!clearingChunks.load()) {
         worldUpdatePool->enqueue([this, playerPosition] {
             CheckChunksForDeletion(playerPosition);
@@ -34,7 +36,7 @@ void ChunkManager::Update(const glm::vec3& playerPosition, Shader& blockShader) 
                 if (chunk->uploadComplete.load()) {
                     chunk->Render(blockShader);
                 }
-                else if (!chunk->meshBuildQueued.load() && chunk->requiresRemesh.load()) {
+                if (!chunk->meshBuildQueued.load() && chunk->requiresRemesh.load()) {
                     //std::cout << "here" << std::endl;
                     //Update the chunks neighbors when the mesh is built so it can access the neighbor chunks for proper face culling
                     auto it = worldChunks.find(position + glm::ivec2(0, 1));
@@ -125,7 +127,6 @@ void ChunkManager::ProcessChunkCleanup() {
     for (Chunk* chunk : cleanupQueue) {
         worldChunks.erase(chunk->position);
         delete chunk;
-        std::cout << "Chunk Deleted" << std::endl;
     }
     cleanupQueue.clear();
 }
@@ -153,6 +154,8 @@ int ChunkManager::GetGlobalBlock(const glm::ivec3& position) {
     int chunkX = static_cast<int>(std::floor(position.x / 16.0f));
     int chunkY = static_cast<int>(std::floor(position.y / 16.0f));
 
+    if (position.z < 0 || position.z > 255) 
+        return 0;
     glm::ivec2 chunkPos(chunkX, chunkY);
     if (!worldChunks.count(chunkPos))
         return 0;
@@ -166,4 +169,29 @@ int ChunkManager::GetGlobalBlock(const glm::ivec3& position) {
     if (y < 0)
         y += 16;
     return chunk->GetBlock(x, y, position.z);
+}
+
+bool ChunkManager::TryBreakBlock(const glm::ivec3& position, bool forceUpdate) {
+    int chunkX = static_cast<int>(std::floor(position.x / 16.0f));
+    int chunkY = static_cast<int>(std::floor(position.y / 16.0f));
+    if (position.z < 0 || position.z > 255)
+        return 0;
+    glm::ivec2 chunkPos(chunkX, chunkY);
+    if (!worldChunks.count(chunkPos))
+        return false;
+    Chunk* chunk = worldChunks[chunkPos];
+    if (!chunk->generated.load())
+        return false;
+    int x = position.x % 16;
+    if (x < 0)
+        x += 16;
+    int y = position.y % 16;
+    if (y < 0)
+        y += 16;
+    int blockID = chunk->GetBlock(x, y, position.z);
+    if (blockID == 0)
+        return false;
+    chunk->SetBlock(x, y, position.z, 0);
+    chunk->requiresRemesh.store(true);
+    return true;
 }

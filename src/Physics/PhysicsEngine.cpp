@@ -5,7 +5,10 @@ void PhysicsEngine::Update(double delta) {
 
 		e->Update(delta);
 		
+		//if (e->CollidesWithVoxels)
 		ResolveVoxelCollisions(delta, e.get());
+		//else
+		//	e->SetPosition(e->GetPosition() + e->Velocity * (float)delta);
 	}
 }
 

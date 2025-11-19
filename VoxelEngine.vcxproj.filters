@@ -34,6 +34,15 @@
     <ClInclude Include="src\Entities\Player.h">
       <Filter>src\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="src\UI\UIManager.h">
+      <Filter>src\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UI\UIComponent.h">
+      <Filter>src\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UI\Anchor.h">
+      <Filter>src\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -56,6 +65,18 @@
     </ClCompile>
     <ClCompile Include="src\Entities\Player.cpp">
       <Filter>src\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\UIManager.cpp">
+      <Filter>src\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\UIComponent.cpp">
+      <Filter>src\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OpenGL\Texture.cpp">
+      <Filter>src\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\OpenGL\Shader.cpp">
+      <Filter>src\OpenGL</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -89,6 +110,9 @@
     <Filter Include="src\Entities">
       <UniqueIdentifier>{f4899271-e939-4e20-aeb3-bb00e25e02f6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\UI">
+      <UniqueIdentifier>{b9404a00-f5a7-4cc2-9840-f042c347de45}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\block.frag">
@@ -97,9 +121,18 @@
     <None Include="res\shaders\block.vert">
       <Filter>res\shaders</Filter>
     </None>
+    <None Include="res\shaders\ui.frag">
+      <Filter>res\shaders</Filter>
+    </None>
+    <None Include="res\shaders\ui.vert">
+      <Filter>res\shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\textures\terrain.png">
+      <Filter>res\textures</Filter>
+    </Image>
+    <Image Include="res\textures\crosshair.png">
       <Filter>res\textures</Filter>
     </Image>
   </ItemGroup>

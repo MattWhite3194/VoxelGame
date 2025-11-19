@@ -6,7 +6,7 @@
 
 class ChunkManager {
 public:
-	int RenderDistance = 48;
+	int RenderDistance = 12;
 	int MaxUploadsPerFrame = 10;
 	ChunkManager() {
 		generationPool = std::make_unique<ThreadPool>(1);
@@ -28,6 +28,7 @@ public:
 	void Update(const glm::vec3 &playerPosition, Shader& blockShader);
 	void Terminate();
 	int GetGlobalBlock(const glm::ivec3& position);
+	bool TryBreakBlock(const glm::ivec3& position, bool forceUpdate);
 	std::atomic<bool> clearingChunks{ false };
 private:
 	struct IVec2Hash {

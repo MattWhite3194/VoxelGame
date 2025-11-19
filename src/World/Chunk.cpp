@@ -8,9 +8,10 @@
 //On generation, create a vertex buffer of the vertices in the geometry, that way only one draw call is needed to render the entire chunk
 //check each block and it's surrounding face to determine which vertices to add
 
-SimplexNoise Chunk::hillNoise(0.1f, 1.0f, 4.1f, 0.1f);
+SimplexNoise Chunk::hillNoise(0.1f, 1.0f, 2.0f, 0.3f);
 SimplexNoise Chunk::mountainNoise(0.0003f, 1.0f, 2.8f, 0.45f);
-SimplexNoise Chunk::ridgeNoise(0.07f, 1.0f, 2.5f, 0.3f);
+SimplexNoise Chunk::ridgeNoise(0.07f, 1.0f, 3.5f, 0.3f);
+SimplexNoise Chunk::caveNoise(1.0f, 1.0f, 2.0f, 0.5f);
 
 const uint8_t frontFace[] = {
     0, 1, 0,  // v0 bottom-left
@@ -80,8 +81,8 @@ void Chunk::Generate() {
             
             float worldX = x / 16.0f + (float)position.x;
             float worldY = y / 16.0f + (float)position.y;
-            float ridge = (1.0f - std::abs(ridgeNoise.fractal(3, worldX, worldY))) * 20.0f;
-            float hill = hillNoise.fractal(2, worldX, worldY) * 10.0f;
+            float ridge = (1.0f - std::abs(ridgeNoise.fractal(3, worldX, worldY))) * 15.0f;
+            float hill = hillNoise.fractal(5, worldX, worldY) * 10.0f;
             float mountain = mountainNoise.fractal(5, worldX, worldY) * 120.0f;
             int totalHeight = 120 + hill + ridge;
             for (int z = totalHeight; z >= 0; z--) {
@@ -89,7 +90,8 @@ void Chunk::Generate() {
                 //3 grass
                 //2 dirt
                 //1 stone
-                
+                //if (caveNoise.fractal(5, worldX, worldY, z / 16.0f) > 0.0f)
+                //    continue;
                 if (z == totalHeight)
                     SetBlock(x, y, z, 3);
                 else if (z > totalHeight - 3)
@@ -104,7 +106,6 @@ void Chunk::Generate() {
 }
 
 void Chunk::Render(Shader& shader) {
-    shader.use();
     glm::mat4 model(1.0f);
     model = glm::translate(model, glm::vec3(position * 16.0f, 0.0f));
     shader.setMat4("model", model);

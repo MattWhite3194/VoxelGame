@@ -3,10 +3,11 @@
 Player::Player(const glm::vec3& position) {
 	this->position = position;
 	this->Shape = std::make_unique<CollisionShape>(glm::vec3(0.6f, 0.6f, 1.8f), glm::vec3(0.0f, 0.0f, 0.9f));
+	//this->CollidesWithVoxels = false;
 	_camera = std::make_unique<Camera>(position + glm::vec3(0.0f, 0.0f, 1.8f));
 }
 void Player::SetPosition(const glm::vec3& position) {
-	_camera->Position = position + (_currentMovementType == Sneaking ? glm::vec3(0.0f, 0.0f, 1.1f) : glm::vec3(0.0f, 0.0f, 1.5f));
+	_camera->Position = position + (_currentMovementType == MovementType::Sneaking ? glm::vec3(0.0f, 0.0f, 1.1f) : glm::vec3(0.0f, 0.0f, 1.5f));
 	this->position = position;
 }
 void Player::Update(double delta) {
@@ -19,7 +20,7 @@ void Player::Update(double delta) {
 
 	ApplyGravity(_maxFallSpeed, _gravity, delta);
 	//Jump
-	if (_currentGroundState == Jumping) {
+	if (_currentGroundState == GroundState::Jumping) {
 		Velocity.z = _jumpSpeed;
 	}
 }
@@ -65,16 +66,16 @@ void Player::HandleKeyboardInput(GLFWwindow* window, int key, int scancode, int 
 }
 glm::vec2 Player::GetDirection() {
 	glm::vec2 direction = glm::vec2(0.0f);
-	if (_activeInputs[Forward]) {
+	if (_activeInputs[MovementInput::Forward]) {
 		direction.y += 1.0f;
 	}
-	if (_activeInputs[Back]) {
+	if (_activeInputs[MovementInput::Back]) {
 		direction.y -= 1.0f;
 	}
-	if (_activeInputs[Right]) {
+	if (_activeInputs[MovementInput::Right]) {
 		direction.x += 1.0f;
 	}
-	if (_activeInputs[Left]) {
+	if (_activeInputs[MovementInput::Left]) {
 		direction.x -= 1.0f;
 	}
 	if (direction != glm::vec2(0.0f))
@@ -84,48 +85,101 @@ glm::vec2 Player::GetDirection() {
 }
 void Player::UpdateMovement() {
 	switch (_currentMovementType) {
-	case Idle:
-		if (_activeInputs[Forward] || _activeInputs[Back] || _activeInputs[Left] || _activeInputs[Right])
-			_currentMovementType = Walking;
-		if (_activeInputs[Crouch])
-			_currentMovementType = Sneaking;
+	case MovementType::Idle:
+		if (_activeInputs[MovementInput::Forward] || _activeInputs[MovementInput::Back] || _activeInputs[MovementInput::Left] || _activeInputs[MovementInput::Right])
+			_currentMovementType = MovementType::Walking;
+		if (_activeInputs[MovementInput::Crouch])
+			_currentMovementType = MovementType::Sneaking;
 		break;
-	case Walking:
-		if (!(_activeInputs[Forward] || _activeInputs[Back] || _activeInputs[Left] || _activeInputs[Right]))
-			_currentMovementType = Idle;
-		if (_activeInputs[Sprint])
-			_currentMovementType = Running;
-		else if (_activeInputs[Crouch])
-			_currentMovementType = Sneaking;
+	case MovementType::Walking:
+		if (!(_activeInputs[MovementInput::Forward] || _activeInputs[MovementInput::Back] || _activeInputs[MovementInput::Left] || _activeInputs[MovementInput::Right]))
+			_currentMovementType = MovementType::Idle;
+		if (_activeInputs[MovementInput::Sprint])
+			_currentMovementType = MovementType::Running;
+		else if (_activeInputs[MovementInput::Crouch])
+			_currentMovementType = MovementType::Sneaking;
 		break;
-	case Running:
-		if (!_activeInputs[Sprint])
-			_currentMovementType = Walking;
-		if (!(_activeInputs[Forward] || _activeInputs[Back] || _activeInputs[Left] || _activeInputs[Right]))
-			_currentMovementType = Idle;
+	case MovementType::Running:
+		if (!_activeInputs[MovementInput::Sprint])
+			_currentMovementType = MovementType::Walking;
+		if (!(_activeInputs[MovementInput::Forward] || _activeInputs[MovementInput::Back] || _activeInputs[MovementInput::Left] || _activeInputs[MovementInput::Right]))
+			_currentMovementType = MovementType::Idle;
 		break;
-	case Sneaking:
-		if (!_activeInputs[Crouch])
-			_currentMovementType = Idle;
+	case MovementType::Sneaking:
+		if (!_activeInputs[MovementInput::Crouch])
+			_currentMovementType = MovementType::Idle;
 		break;
 	}
 	switch (_currentGroundState) {
-	case Grounded:
+	case GroundState::Grounded:
 		if (Velocity.z > 0)
-			_currentGroundState = Falling;
-		else if (_activeInputs[Jump])
-			_currentGroundState = Jumping;
+			_currentGroundState = GroundState::Falling;
+		else if (_activeInputs[MovementInput::Jump])
+			_currentGroundState = GroundState::Jumping;
 		break;
-	case Falling:
+	case GroundState::Falling:
 		if (IsOnFloor)
-			_currentGroundState = Grounded;
+			_currentGroundState = GroundState::Grounded;
 		break;
-	case Jumping:
+	case GroundState::Jumping:
 		if (!IsOnFloor)
-			_currentGroundState = Falling;
+			_currentGroundState = GroundState::Falling;
 		break;
 	}
 }
 void Player::ProcessMouseMovement(int xoffset, int yoffset) {
 	_camera->ProcessMouseMovement(xoffset, yoffset);
+}
+void Player::ProcessMouseInput(GLFWwindow* window, int button, int action, int mods, ChunkManager* chunkManager, const glm::vec3& dir) {
+	int range = 10;
+	if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
+		glm::vec3 origin = _camera->Position;
+		glm::ivec3 voxel = glm::ivec3(glm::floor(origin));
+		glm::ivec3 step = glm::ivec3(
+			dir.x > 0 ? 1 : -1,
+			dir.y > 0 ? 1 : -1,
+			dir.z > 0 ? 1 : -1
+		);
+		glm::ivec3 nextBoundary = glm::ivec3(
+			step.x > 0 ? voxel.x + 1 : voxel.x,
+			step.y > 0 ? voxel.y + 1 : voxel.y,
+			step.z > 0 ? voxel.z + 1 : voxel.z
+		);
+		glm::vec3 tDelta = glm::vec3(
+			dir.x == 0 ? FLT_MAX : glm::abs(1.0f / dir.x),
+			dir.y == 0 ? FLT_MAX : glm::abs(1.0f / dir.y),
+			dir.z == 0 ? FLT_MAX : glm::abs(1.0f / dir.z)
+		);
+
+		glm::vec3 tMax = glm::vec3(
+			dir.x == 0 ? FLT_MAX : (nextBoundary.x - origin.x) / dir.x,
+			dir.y == 0 ? FLT_MAX : (nextBoundary.y - origin.y) / dir.y,
+			dir.z == 0 ? FLT_MAX : (nextBoundary.z - origin.z) / dir.z
+		);
+		for (int i = 0; i < range; i++) {
+			
+			if (chunkManager->TryBreakBlock(voxel, true))
+				break;
+			if (tMax.x < tMax.y) {
+				if (tMax.x < tMax.z) {
+					voxel.x += step.x;
+					tMax.x += tDelta.x;
+				}
+				else {
+					voxel.z += step.z;
+					tMax.z += tDelta.z;
+				}
+			}
+			else {
+				if (tMax.y < tMax.z) {
+					voxel.y += step.y;
+					tMax.y += tDelta.y;
+				}
+				else {
+					voxel.z += step.z;
+					tMax.z += tDelta.z;
+				}
+			}
+		}
+	}
 }

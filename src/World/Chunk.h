@@ -5,6 +5,7 @@
 #include "Generation/SimplexNoise.h"
 #include <optional>
 #include <mutex>
+#include <glad/glad.h>
 
 struct Vertex {
 	uint8_t x, y, z;
@@ -18,6 +19,8 @@ struct Chunk {
 	static SimplexNoise hillNoise;
 	static SimplexNoise mountainNoise;
 	static SimplexNoise ridgeNoise;
+	//TODO: voronoi noise for cave generation
+	static SimplexNoise caveNoise;
 	/// <summary>
 	/// The position of the chunk in the world. 
 	/// Chunks are every 16 tiles. 

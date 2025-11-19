@@ -17,6 +17,7 @@ public:
 	bool IsOnFloor = false;
 	bool CollisionX = false;
 	bool CollisionY = false;
+	bool CollidesWithVoxels = true;
 	const glm::vec3& GetPosition() {
 		return position;
 	}
