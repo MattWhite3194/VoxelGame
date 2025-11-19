@@ -1,10 +1,35 @@
 #include "World/ChunkManager.h"
-#include <glm/gtx/string_cast.hpp>
+#include "Entities/Player.h"
 
-void ChunkManager::Update(const glm::vec3& playerPosition, Shader& blockShader) {
+ChunkManager::ChunkManager(std::shared_ptr<Player> player) : _player(player) {
+    _generationPool = std::make_unique<ThreadPool>(1);
+    _meshingPool = std::make_unique<ThreadPool>(1);
+    _worldUpdatePool = std::make_unique<ThreadPool>(1);
+
+    //TODO: update based on where the player position starts at
+    //create first 9 chunks that the player is standing on
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            glm::ivec2 position(x, y);
+            _worldChunks[position] = new Chunk();
+            Chunk* newChunk = _worldChunks[position];
+            newChunk->position = position;
+            newChunk->Generate();
+        }
+    }
+    //Set player spawn point
+    int z = 255;
+    while (GetGlobalBlock(glm::vec3(0, 0, z)) == 0) {
+        z--;
+    }
+    _player->SetPosition(glm::vec3(0, 0, z));
+}
+
+void ChunkManager::Update(Shader& blockShader) {
+    glm::vec3 playerPosition = _player->GetPosition();
     blockShader.use();
     if (!clearingChunks.load()) {
-        worldUpdatePool->enqueue([this, playerPosition] {
+        _worldUpdatePool->enqueue([this, playerPosition] {
             CheckChunksForDeletion(playerPosition);
             });
         clearingChunks.store(true);
@@ -19,10 +44,10 @@ void ChunkManager::Update(const glm::vec3& playerPosition, Shader& blockShader) 
     ProcessMeshUpload();
     ProcessChunkCleanup();
     for (int i = 0; i < (RenderDistance * 2) * (RenderDistance * 2); i++) {
-        std::lock_guard<std::mutex> lock(worldChunksMutex);
+        std::lock_guard<std::mutex> lock(_worldChunksMutex);
         glm::ivec2 position(playerPosition.x / 16.0f + x, playerPosition.y / 16.0f + y);
         if (std::sqrt(x * x + y * y) <= RenderDistance) {
-            Chunk* chunk = worldChunks[position];
+            Chunk* chunk = _worldChunks[position];
             //Don't operate on the chunk if it has been scheduled for deletion
             if (chunk) {
                 //Do nothing if the chunk hasn't been generated yet
@@ -39,36 +64,36 @@ void ChunkManager::Update(const glm::vec3& playerPosition, Shader& blockShader) 
                 if (!chunk->meshBuildQueued.load() && chunk->requiresRemesh.load()) {
                     //std::cout << "here" << std::endl;
                     //Update the chunks neighbors when the mesh is built so it can access the neighbor chunks for proper face culling
-                    auto it = worldChunks.find(position + glm::ivec2(0, 1));
-                    if (it != worldChunks.end())
+                    auto it = _worldChunks.find(position + glm::ivec2(0, 1));
+                    if (it != _worldChunks.end())
                         chunk->NorthNeighbor = it->second;
 
-                    it = worldChunks.find(position + glm::ivec2(1, 0));
-                    if (it != worldChunks.end())
+                    it = _worldChunks.find(position + glm::ivec2(1, 0));
+                    if (it != _worldChunks.end())
                         chunk->EastNeighbor = it->second;
 
-                    it = worldChunks.find(position + glm::ivec2(0, -1));
-                    if (it != worldChunks.end())
+                    it = _worldChunks.find(position + glm::ivec2(0, -1));
+                    if (it != _worldChunks.end())
                         chunk->SouthNeighbor = it->second;
 
-                    it = worldChunks.find(position + glm::ivec2(-1, 0));
-                    if (it != worldChunks.end())
+                    it = _worldChunks.find(position + glm::ivec2(-1, 0));
+                    if (it != _worldChunks.end())
                         chunk->WestNeighbor = it->second;
                     chunk->meshBuildQueued.store(true);
-                    meshingPool->enqueue([this, chunk] {
+                    _meshingPool->enqueue([this, chunk] {
                         chunk->BuildMesh();
                         if (!chunk->requiresRemesh.load())
-                            meshUploadQueue.push(chunk);
+                            _meshUploadQueue.push(chunk);
                     });
                     //meshUploadQueue.push(chunk);
                 }
             }
             else {
                 //If chunk is nullptr, create the chunk and add it's generation to the generation ThreadPool
-                worldChunks[position] = new Chunk();
-                Chunk* newChunk = worldChunks[position];
+                _worldChunks[position] = new Chunk();
+                Chunk* newChunk = _worldChunks[position];
                 newChunk->position = position;
-                generationPool->enqueue([newChunk] {
+                _generationPool->enqueue([newChunk] {
                     newChunk->Generate();
                     });
             }
@@ -81,15 +106,6 @@ void ChunkManager::Update(const glm::vec3& playerPosition, Shader& blockShader) 
         x += dx;
         y += dy;
     }
-    //No seams
-    //if chunk terrain generated -> queue mesh build
-    //if no neighbors -> stop mesh build, requeue it
-    //if neighbors -> build mesh, queue gpu upload
-
-    //seams
-    //if chunk terrain generated -> queue mesh build
-    //if no neighbors -> generate mesh, queue upload to gpu, mark neighbors as dirty
-    //if neighbors -> build mesh, queue gpu upload
 }
 
 void ChunkManager::CheckChunksForDeletion(const glm::vec3& playerPosition) {
@@ -99,11 +115,11 @@ void ChunkManager::CheckChunksForDeletion(const glm::vec3& playerPosition) {
     std::vector<std::pair<glm::ivec2, Chunk*>> pairs;
     //minize lock time, get snapshot of valid keys
     {
-        std::lock_guard<std::mutex> lock(worldChunksMutex);
-        if (worldChunks.empty()) 
+        std::lock_guard<std::mutex> lock(_worldChunksMutex);
+        if (_worldChunks.empty()) 
             return;
-        pairs.reserve(worldChunks.size());
-        for (const auto& pair : worldChunks)
+        pairs.reserve(_worldChunks.size());
+        for (const auto& pair : _worldChunks)
             pairs.push_back(pair);
     }
     for (const auto& pair : pairs) {
@@ -115,27 +131,27 @@ void ChunkManager::CheckChunksForDeletion(const glm::vec3& playerPosition) {
             continue;
         if (glm::distance(chunk->position, glm::vec2(playerPosition / 16.0f)) > RenderDistance + 2) {
             chunk->scheduledForDeletion.store(true);
-            std::lock_guard<std::mutex> lock(cleanupMutex);
-            cleanupQueue.push_back(chunk);
+            std::lock_guard<std::mutex> lock(_cleanupMutex);
+            _cleanupQueue.push_back(chunk);
         }
     }
     clearingChunks.store(false);
 }
 
 void ChunkManager::ProcessChunkCleanup() {
-    std::lock_guard<std::mutex> lock(cleanupMutex);
-    for (Chunk* chunk : cleanupQueue) {
-        worldChunks.erase(chunk->position);
+    std::lock_guard<std::mutex> lock(_cleanupMutex);
+    for (Chunk* chunk : _cleanupQueue) {
+        _worldChunks.erase(chunk->position);
         delete chunk;
     }
-    cleanupQueue.clear();
+    _cleanupQueue.clear();
 }
 
 void ChunkManager::ProcessMeshUpload() {
     int numUploads = 0;
-    while (meshUploadQueue.size() > 0) {
-        Chunk* chunk = meshUploadQueue.front();
-        meshUploadQueue.pop();
+    while (_meshUploadQueue.size() > 0) {
+        Chunk* chunk = _meshUploadQueue.front();
+        _meshUploadQueue.pop();
         chunk->UploadToGPU();
         chunk->uploadComplete.store(true);
         numUploads++;
@@ -145,9 +161,9 @@ void ChunkManager::ProcessMeshUpload() {
 }
 
 void ChunkManager::Terminate() {
-    worldUpdatePool->join();
-    meshingPool->join();
-    generationPool->join();
+    _worldUpdatePool->join();
+    _meshingPool->join();
+    _generationPool->join();
 }
 
 int ChunkManager::GetGlobalBlock(const glm::ivec3& position) {
@@ -157,9 +173,9 @@ int ChunkManager::GetGlobalBlock(const glm::ivec3& position) {
     if (position.z < 0 || position.z > 255) 
         return 0;
     glm::ivec2 chunkPos(chunkX, chunkY);
-    if (!worldChunks.count(chunkPos))
+    if (!_worldChunks.count(chunkPos))
         return 0;
-    Chunk* chunk = worldChunks[chunkPos];
+    Chunk* chunk = _worldChunks[chunkPos];
     if (!chunk->generated.load())
         return 0;
     int x = position.x % 16;
@@ -177,9 +193,9 @@ bool ChunkManager::TryBreakBlock(const glm::ivec3& position, bool forceUpdate) {
     if (position.z < 0 || position.z > 255)
         return 0;
     glm::ivec2 chunkPos(chunkX, chunkY);
-    if (!worldChunks.count(chunkPos))
+    if (!_worldChunks.count(chunkPos))
         return false;
-    Chunk* chunk = worldChunks[chunkPos];
+    Chunk* chunk = _worldChunks[chunkPos];
     if (!chunk->generated.load())
         return false;
     int x = position.x % 16;

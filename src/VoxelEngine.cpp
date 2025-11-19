@@ -78,8 +78,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 int main()
 {
-    player = std::make_shared<Player>(glm::vec3(5.0f, 5.0f, 200.0f));
-    chunkManager = std::make_shared<ChunkManager>();
+    player = std::make_shared<Player>(glm::vec3(0.0f));
+    chunkManager = std::make_shared<ChunkManager>(player);
     physicsEngine = std::make_unique<PhysicsEngine>(player, chunkManager);
     uiManager = std::make_unique<UIManager>();
 
@@ -151,7 +151,7 @@ int main()
         blockShader.setMat4("view", player->GetView());
         blockShader.setVec3("CameraPos", player->GetPosition());
         blockShader.setFloat("fadeStartDistance", chunkManager->RenderDistance * 16 - 20);
-        chunkManager->Update(player->GetPosition(), blockShader);
+        chunkManager->Update(blockShader);
 
         //Update and render UI
         uiShader.use();
