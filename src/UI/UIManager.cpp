@@ -26,7 +26,6 @@ void UIManager::Initialize(int viewportWidth, int viewportHeight) {
 }
 
 void UIManager::Update(Shader& shader, const glm::mat4& projection) {
-    glDisable(GL_DEPTH_TEST);
 	for (auto c : _components) {
 		shader.setMat4("Transform", c->transformMatrix);
         c->texture->texUnit(shader, "Texture", 0);

@@ -151,7 +151,7 @@ int main()
         blockShader.setMat4("view", player->GetView());
         blockShader.setVec3("CameraPos", player->GetPosition());
         blockShader.setFloat("fadeStartDistance", chunkManager->RenderDistance * 16 - 20);
-        //chunkManager->Update(player->GetPosition(), blockShader);
+        chunkManager->Update(player->GetPosition(), blockShader);
 
         //Update and render UI
         uiShader.use();
